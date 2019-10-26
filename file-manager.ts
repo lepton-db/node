@@ -4,15 +4,17 @@ const path = require('path');
 const util = require('util');
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
+const readDir = util.promisify(fs.readdir);
 
 export function fileManager(dirpath) {
   return {
-    read: reader(dirpath),
-    write: writer(dirpath),
+    readTable: tableReader(dirpath),
+    writeTable: tableWriter(dirpath),
+    readAllTables: allTableReader(dirpath),
   }
 }
 
-const reader = dirpath => async table => {
+const tableReader = dirpath => async table => {
   const filename = path.join(dirpath, table) + ".json";
   // Try to read file
   const contents = await readFile(filename, 'utf8').catch(e => e);
@@ -27,7 +29,7 @@ const reader = dirpath => async table => {
   return [data, null];
 }
 
-const writer = dirpath => async (table, data) => {
+const tableWriter = dirpath => async (table, data) => {
   const filename = path.join(dirpath, table) + ".json";
   const json = JSON.stringify(data, null, 2);
   // Try to read file
@@ -36,6 +38,22 @@ const writer = dirpath => async (table, data) => {
     return [null, tableNotExistsError(filename)];
   }
   return [json, null];
+}
+
+const allTableReader = dirpath => async () => {
+  const files = await readDir(dirpath);
+  const jsonFiles = files.filter(f => f.slice(-5) == '.json');
+  const tableNames = jsonFiles.map(f => f.slice(0, -5));
+
+  const data = {};
+  const readTable = tableReader(dirpath);
+
+  for (const tableName of tableNames) {
+    const [records, err] = await readTable(tableName);
+    if (err) return [null, err];
+    data[tableName] = records;
+  }
+  return [data, null];
 }
 
 function safeJsonParse(str) {
