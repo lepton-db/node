@@ -16,7 +16,7 @@ export function fileManager(dirpath) {
 
 /**
  * Given the path to a directory, create a function that can read data from
- * a single <table>.json files inside
+ * a single <table>.json file inside
  */
 const tableReader = dirpath => async table => {
   const filename = path.join(dirpath, table) + ".json";
@@ -35,7 +35,7 @@ const tableReader = dirpath => async table => {
 
 /**
  * Given the path to a directory, create a function that can write data to
- * a single <table>.json files inside
+ * a single <table>.json file inside
  */
 const tableWriter = dirpath => async (table, data) => {
   const filename = path.join(dirpath, table) + ".json";
@@ -60,6 +60,7 @@ const allTableReader = dirpath => async () => {
   const data = {};
   const readTable = tableReader(dirpath);
 
+  // TODO: Use a non-blocking loop
   for (const tableName of tableNames) {
     const [records, err] = await readTable(tableName);
     if (err) return [null, err];
