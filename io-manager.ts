@@ -5,9 +5,10 @@ const util = require('util');
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
-function database(dirpath) {
+export function database(dirpath) {
   return {
     read: reader(dirpath),
+    write: writer(dirpath),
   }
 }
 
@@ -26,15 +27,15 @@ const reader = dirpath => async table => {
   return [data, null];
 }
 
-const write = dirpath => async (table, data) => {
+const writer = dirpath => async (table, data) => {
   const filename = path.join(dirpath, table) + ".json";
-  const json = JSON.stringify(data);
+  const json = JSON.stringify(data, null, 2);
   // Try to read file
   const results = await writeFile(filename, json).catch(e => e);
   if (results instanceof Error) {
     return [null, tableNotExistsError(filename)];
   }
-  return [data, null];
+  return [json, null];
 }
 
 function safeJsonParse(str) {
@@ -54,8 +55,20 @@ function tableCorruptionError(filename) {
   return e;
 }
 
-(async function() {
-  const db = database(__dirname + '/data');
-  const [actors, err] = await db.read('actors');
-  console.log({ actors, err })
-})()
+// (async function() {
+//   const db = database(__dirname + '/data');
+//   const data = [
+//     {
+//       "id": "a6320da84fabd25487377283b03b4c54",
+//       "cash": 1000.50
+//     }
+//   ];
+//   const [actors, err] = await db.write('actors', data);
+//   console.log({ actors, err })
+// })()
+
+// (async function() {
+//   const db = database(__dirname + '/data');
+//   const [actors, err] = await db.read('actors');
+//   console.log({ actors, err })
+// })()
