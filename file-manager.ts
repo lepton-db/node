@@ -5,7 +5,7 @@ const util = require('util');
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
-export function database(dirpath) {
+export function fileManager(dirpath) {
   return {
     read: reader(dirpath),
     write: writer(dirpath),
@@ -54,21 +54,3 @@ function tableCorruptionError(filename) {
   e.name = 'TableCorruptionError';
   return e;
 }
-
-// (async function() {
-//   const db = database(__dirname + '/data');
-//   const data = [
-//     {
-//       "id": "a6320da84fabd25487377283b03b4c54",
-//       "cash": 1000.50
-//     }
-//   ];
-//   const [actors, err] = await db.write('actors', data);
-//   console.log({ actors, err })
-// })()
-
-// (async function() {
-//   const db = database(__dirname + '/data');
-//   const [actors, err] = await db.read('actors');
-//   console.log({ actors, err })
-// })()
