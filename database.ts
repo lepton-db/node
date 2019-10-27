@@ -37,12 +37,20 @@ export async function database(dirpath) {
   return {
     define,
     commit: makeCommiter(fm, data),
-    read: (table:string) => data[table],
+    read: (table:string) => readOnly(data[table]),
   }
 }
 
 function define(table, fields): CommitMaterial {
   return { table, mutation: 'define', payload: fields }
+}
+
+function readOnly(table) {
+  const copy = {}
+  for (const [id, fields] of Object.entries(table)) {
+    copy[id] = { ...fields }
+  }
+  return copy;
 }
 
 function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
@@ -57,6 +65,12 @@ function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
     if (cm.mutation == 'create') {
       const { id, ...fields } = cm.payload;
       data[cm.table][id] = fields;
+    }
+
+    if (cm.mutation == 'update') {
+      const { id, ...newFields } = cm.payload;
+      const { ...oldFields } = data[cm.table][id];
+      data[cm.table][id] = { ...oldFields, ...newFields };
     }
   }
 }
