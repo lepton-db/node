@@ -5,7 +5,7 @@ const util = require('util');
 const rl = require('readline');
 const { base36 } = require('./id');
 const appendFile = util.promisify(fs.appendFile);
-import { CommitMaterial } from './entities';
+import { CommitMaterial, ReadableDatabase } from './entities';
 
 export function fileManager(dirpath) {
   return {
@@ -23,12 +23,12 @@ const makeCommiter = dirpath => async (material:CommitMaterial) => {
   const commitStr = JSON.stringify(commit) + '\n';
   const result = await appendFile(datafile, commitStr).catch(e => e);
   if (result instanceof Error) {
-    return [null, commitError(datafile, commit)]
+    return commitError(datafile, commit);
   }
-  return [commit, null];
+  return commit;
 }
 
-const makeRebuilder = dirpath => async (): Promise<any[]> => {
+const makeRebuilder = dirpath => async (): Promise<ReadableDatabase | Error> => {
   const datafile = path.join(dirpath, 'commits.jsonl');
   const data = {};
   
@@ -48,8 +48,8 @@ const makeRebuilder = dirpath => async (): Promise<any[]> => {
       }
     })
 
-    lines.on('error', error => reject([null, rebuildError(datafile)]))
-    lines.on('close', () => resolve([data, null]));
+    lines.on('error', error => reject(rebuildError(datafile)))
+    lines.on('close', () => resolve(data));
   })
 }
 

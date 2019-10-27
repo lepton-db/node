@@ -90,6 +90,10 @@ import { fileManager } from './file-manager';
       "quantity": 2
     }
   })
-  const [data, err] = await fm.rebuild();
-  console.log(data, err);
+  const data = await fm.rebuild();
+  if (false == data instanceof Error) {
+    console.log(data);
+  } else {
+    throw data;
+  }
 })()

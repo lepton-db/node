@@ -11,3 +11,16 @@ export interface CommitMaterial {
   mutation: string
   payload: any
 }
+
+export interface ReadableTable {
+  [id:string]: object
+}
+
+export interface ReadableDatabase {
+  [table:string]: ReadableTable
+}
+
+export interface FileManager {
+  commit: (cm:CommitMaterial) => Promise<Commit>
+  rebuild: ReadableDatabase
+}
