@@ -59,7 +59,7 @@ const makeRebuilder = dirpath => async (): Promise<Error|ReadableDatabase> => {
   })
 }
 
-function rebuildError(datafile) {
+function rebuildError(datafile:string) {
   const e = new Error('Could not rebuild from commit history');
   e.name = 'RebuildError';
   return e;
@@ -71,7 +71,7 @@ function withoutThrowing(fn, ...args) {
 }
 
 // New Error Type
-function commitError(datafile, commit) {
+function commitError(datafile:string, commit:Commit) {
   const e = new Error(`
     Could not apply commit: ${JSON.stringify(commit)} to datafile ${datafile}
   `.trim());
