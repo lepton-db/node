@@ -5,7 +5,11 @@ const util = require('util');
 const rl = require('readline');
 const { base36 } = require('./id');
 const appendFile = util.promisify(fs.appendFile);
-import { CommitMaterial, ReadableDatabase } from './entities';
+import {
+  Commit,
+  CommitMaterial,
+  ReadableDatabase
+} from './entities';
 
 export function fileManager(dirpath) {
   return {
@@ -14,21 +18,23 @@ export function fileManager(dirpath) {
   }
 }
 
-const makeCommiter = dirpath => async (material:CommitMaterial) => {
-  const { table, mutation, payload } = material;
-  const datafile = path.join(dirpath, 'commits.jsonl');
-  const id = base36();
-  const timestamp = new Date().toISOString();
-  const commit = { id, timestamp, table, mutation, payload };
-  const commitStr = JSON.stringify(commit) + '\n';
-  const result = await appendFile(datafile, commitStr).catch(e => e);
-  if (result instanceof Error) {
-    return commitError(datafile, commit);
+function makeCommiter(dirpath) {
+  return async function(cm:CommitMaterial): Promise<Error|Commit> {
+    const { table, mutation, payload } = cm;
+    const datafile = path.join(dirpath, 'commits.jsonl');
+    const id = base36();
+    const timestamp = new Date().toISOString();
+    const commit = { id, timestamp, table, mutation, payload };
+    const commitStr = JSON.stringify(commit) + '\n';
+    const result = await appendFile(datafile, commitStr).catch(e => e);
+    if (result instanceof Error) {
+      return commitError(datafile, commit);
+    }
+    return commit;
   }
-  return commit;
 }
 
-const makeRebuilder = dirpath => async (): Promise<ReadableDatabase | Error> => {
+const makeRebuilder = dirpath => async (): Promise<Error|ReadableDatabase> => {
   const datafile = path.join(dirpath, 'commits.jsonl');
   const data = {};
   
