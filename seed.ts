@@ -1,4 +1,4 @@
-import { fileManager } from './jsonl-file-manager';
+import { fileManager } from './file-manager';
 
 (async () => {
   const fm = fileManager(__dirname + '/data');

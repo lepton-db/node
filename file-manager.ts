@@ -3,89 +3,70 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 const rl = require('readline');
-const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
-const readDir = util.promisify(fs.readdir);
+const { base36 } = require('./id');
+const appendFile = util.promisify(fs.appendFile);
 
 export function fileManager(dirpath) {
   return {
-    readTable: tableReader(dirpath),
-    writeTable: tableWriter(dirpath),
-    readAllTables: allTableReader(dirpath),
+    commit: makeCommiter(dirpath),
+    rebuild: makeRebuilder(dirpath),
   }
 }
 
-/**
- * Given the path to a directory, create a function that can read data from
- * a single <table>.json file inside
- */
-const tableReader = dirpath => async table => {
-  const filename = path.join(dirpath, table) + ".json";
-  // Try to read file
-  const contents = await readFile(filename, 'utf8').catch(e => e);
-  if (contents instanceof Error) {
-    return [null, tableNotExistsError(filename)];
+const makeCommiter = dirpath => async (table, mutation, payload) => {
+  const datafile = path.join(dirpath, 'commits.jsonl');
+  const id = base36();
+  const timestamp = new Date().toISOString();
+  const commit = { id, timestamp, table, mutation, payload };
+  const commitStr = JSON.stringify(commit) + '\n';
+  const result = await appendFile(datafile, commitStr).catch(e => e);
+  if (result instanceof Error) {
+    return [null, commitError(datafile, commit)]
   }
-  // Try to parse JSON
-  const data = safeJsonParse(contents);
-  if (data instanceof Error) {
-    return [null, tableCorruptionError(filename)];
-  }
-  return [data, null];
+  return [commit, null];
 }
 
-/**
- * Given the path to a directory, create a function that can write data to
- * a single <table>.json file inside
- */
-const tableWriter = dirpath => async (table, data) => {
-  const filename = path.join(dirpath, table) + ".json";
-  const json = JSON.stringify(data, null, 2);
-  // Try to read file
-  const results = await writeFile(filename, json).catch(e => e);
-  if (results instanceof Error) {
-    return [null, tableNotExistsError(filename)];
-  }
-  return [json, null];
-}
-
-/**
- * Given the path to a directory, create a function that can read data from 
- * all <table>.json files inside
- */
-const allTableReader = dirpath => async () => {
-  const files = await readDir(dirpath);
-  const jsonFiles = files.filter(f => f.slice(-5) == '.json');
-  const tableNames = jsonFiles.map(f => f.slice(0, -5));
-
+const makeRebuilder = dirpath => async (): Promise<any[]> => {
+  const datafile = path.join(dirpath, 'commits.jsonl');
   const data = {};
-  const readTable = tableReader(dirpath);
+  
+  return new Promise(async (resolve, reject) => {
+    // Configure Input Stream
+    const input = withoutThrowing(fs.createReadStream, datafile)
+    if (input instanceof Error) return [null, rebuildError(datafile)]
+    const lines = rl.createInterface({ input });
+    
+    // Read the commit file line by line, parsing each as JSON
+    lines.on('line', line => {
+      const commit = JSON.parse(line);
+      if (commit.mutation == 'create') {
+        if (!data[commit.table]) data[commit.table] = {};
+        const { id, ...rest  } = commit.payload;
+        data[commit.table][id] = { ...rest };
+      }
+    })
 
-  // TODO: Use a non-blocking loop
-  for (const tableName of tableNames) {
-    const [records, err] = await readTable(tableName);
-    if (err) return [null, err];
-    data[tableName] = records;
-  }
-  return [data, null];
+    lines.on('error', error => reject([null, rebuildError(datafile)]))
+    lines.on('close', () => resolve([data, null]));
+  })
 }
 
-// JSON.parse() without throwing
-function safeJsonParse(str) {
-  try { return JSON.parse(str) }
+function rebuildError(datafile) {
+  const e = new Error('Could not rebuild from commit history');
+  e.name = 'RebuildError';
+  return e;
+}
+
+function withoutThrowing(fn, ...args) {
+  try { return fn(...args) }
   catch (e) { return e }
 }
 
 // New Error Type
-function tableNotExistsError(filename) {
-  const e = new Error(`Expected ${filename} to exist`);
-  e.name = 'TableNotExistsErr';
-  return e;
-}
-
-// New Error Type
-function tableCorruptionError(filename) {
-  const e = new Error(`Expected ${filename} to contain valid JSON`);
-  e.name = 'TableCorruptionError';
+function commitError(datafile, commit) {
+  const e = new Error(`
+    Could not apply commit: ${JSON.stringify(commit)} to datafile ${datafile}
+  `.trim());
+  e.name = 'CommitError';
   return e;
 }
