@@ -28,11 +28,15 @@ import {
 } from './entities';
 import { fileManager } from './file-manager';
 
-export function database(dirpath) {
+export async function database(dirpath) {
   const fm = fileManager(dirpath)
+  const data = await fm.rebuild();
+  if (data instanceof Error) throw data;
+
   return {
     define,
-    commit: makeCommiter(fm)
+    commit: makeCommiter(fm),
+    read: (table:string) => data[table],
   }
 }
 

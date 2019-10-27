@@ -1,9 +1,9 @@
-import { fileManager } from './file-manager';
+import { database } from './database';
 
 (async () => {
-  const fm = fileManager(__dirname + '/data');
+  const data = await database(__dirname + '/data');
   // Actors
-  await fm.commit({
+  await data.commit({
     table: 'actors',
     mutation: 'create',
     payload: {
@@ -11,7 +11,7 @@ import { fileManager } from './file-manager';
       "cash": 6500.54
     }
   })
-  await fm.commit({
+  await data.commit({
     table: 'actors',
     mutation: 'create',
     payload: {
@@ -20,7 +20,7 @@ import { fileManager } from './file-manager';
     }
   })
   // Transactions
-  await fm.commit({
+  await data.commit({
     table: 'transactions',
     mutation: 'create',
     payload: {
@@ -33,7 +33,7 @@ import { fileManager } from './file-manager';
       "price": 246.58
     }
   })
-  await fm.commit({
+  await data.commit({
     table: 'transactions',
     mutation: 'create',
     payload: {
@@ -46,7 +46,7 @@ import { fileManager } from './file-manager';
       "price": 140.73
     },
   })
-  await fm.commit({
+  await data.commit({
     table: 'transactions',
     mutation: 'create',
     payload: {
@@ -60,7 +60,7 @@ import { fileManager } from './file-manager';
     },
   })
   // Positions
-  await fm.commit({
+  await data.commit({
     table: 'positions',
     mutation: 'create',
     payload: {
@@ -70,7 +70,7 @@ import { fileManager } from './file-manager';
       "quantity": 7
     },
   })
-  await fm.commit({
+  await data.commit({
     table: 'positions',
     mutation: 'create',
     payload: {
@@ -80,7 +80,7 @@ import { fileManager } from './file-manager';
       "quantity": 4
     }
   })
-  await fm.commit({
+  await data.commit({
     table: 'positions',
     mutation: 'create',
     payload: {
@@ -90,10 +90,9 @@ import { fileManager } from './file-manager';
       "quantity": 2
     }
   })
-  const data = await fm.rebuild();
-  if (false == data instanceof Error) {
-    console.log(data);
-  } else {
-    throw data;
-  }
+
+  const actors = data.read('actors');
+  const positions = data.read('positions');
+  const transaction = data.read('transactions');
+  console.log({ actors, positions, transaction })
 })()
