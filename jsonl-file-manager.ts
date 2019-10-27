@@ -9,22 +9,53 @@ const appendFile = util.promisify(fs.appendFile);
 export function fileManager(dirpath) {
   return {
     commit: makeCommiter(dirpath),
+    rebuild: makeRebuilder(dirpath),
   }
 }
 
 const makeCommiter = dirpath => async (table, mutation, payload) => {
   const datafile = path.join(dirpath, 'commits.jsonl');
   const commit = { id: id(), table, mutation, payload };
-  const result = await appendFile(datafile, JSON.stringify(commit) + '\n');
+  const commitStr = JSON.stringify(commit) + '\n';
+  const result = await appendFile(datafile, commitStr).catch(e => e);
   if (result instanceof Error) {
     return [null, commitError(datafile, commit)]
   }
   return [commit, null];
 }
 
-// JSON.parse() without throwing
-function safeJsonParse(str) {
-  try { return JSON.parse(str) }
+const makeRebuilder = dirpath => async (): Promise<any[]> => {
+  const datafile = path.join(dirpath, 'commits.jsonl');
+  const data = {};
+  
+  return new Promise(async (resolve, reject) => {
+    // Configure Input Stream
+    const input = withoutThrowing(fs.createReadStream, datafile)
+    if (input instanceof Error) return [null, rebuildError(datafile)]
+    const lines = rl.createInterface({ input });
+    
+    // Read the commit file line by line, parsing each as JSON
+    lines.on('line', line => {
+      const commit = JSON.parse(line);
+      if (commit.mutation == 'create') {
+        if (!data[commit.table]) data[commit.table] = [];
+        data[commit.table].push(commit.payload);
+      }
+    })
+
+    lines.on('error', error => reject([null, rebuildError(datafile)]))
+    lines.on('close', () => resolve([data, null]));
+  })
+}
+
+function rebuildError(datafile) {
+  const e = new Error('Could not rebuild from commit history');
+  e.name = 'RebuildError';
+  return e;
+}
+
+function withoutThrowing(fn, ...args) {
+  try { return fn(...args) }
   catch (e) { return e }
 }
 

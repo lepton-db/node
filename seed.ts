@@ -3,7 +3,7 @@ import { fileManager } from './jsonl-file-manager';
 (async () => {
   const fm = fileManager(__dirname + '/data');
   // Actors
-  fm.commit(
+  await fm.commit(
     'actors',
     'create',
     {
@@ -12,7 +12,7 @@ import { fileManager } from './jsonl-file-manager';
     }
   )
   // Transactions
-  fm.commit(
+  await fm.commit(
     'transactions',
     'create',
     {
@@ -22,7 +22,7 @@ import { fileManager } from './jsonl-file-manager';
       "quantity": 7
     }
   )
-  fm.commit(
+  await fm.commit(
     'transactions',
     'create',
     {
@@ -33,7 +33,7 @@ import { fileManager } from './jsonl-file-manager';
     }
   )
   // Positions
-  fm.commit(
+  await fm.commit(
     'positions',
     'create',
     {
@@ -43,7 +43,7 @@ import { fileManager } from './jsonl-file-manager';
       "quantity": 7
     },
   )
-  fm.commit(
+  await fm.commit(
     'positions',
     'create',
     {
@@ -53,5 +53,6 @@ import { fileManager } from './jsonl-file-manager';
       "quantity": 4
     }
   )
-
+  const [data, err] = await fm.rebuild();
+  console.log(data, err);
 })()
