@@ -21,6 +21,6 @@ export interface ReadableDatabase {
 }
 
 export interface FileManager {
-  commit: (cm:CommitMaterial) => Promise<Commit>
-  rebuild: ReadableDatabase
+  commit: (cm:CommitMaterial) => Promise<Error|Commit>
+  rebuild: () => Promise<Error|ReadableDatabase>
 }
