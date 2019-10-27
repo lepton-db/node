@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 const rl = require('readline');
-const id = require('./id');
+const { base36 } = require('./id');
 const appendFile = util.promisify(fs.appendFile);
 
 export function fileManager(dirpath) {
@@ -15,7 +15,9 @@ export function fileManager(dirpath) {
 
 const makeCommiter = dirpath => async (table, mutation, payload) => {
   const datafile = path.join(dirpath, 'commits.jsonl');
-  const commit = { id: id.base36(), table, mutation, payload };
+  const id = base36();
+  const timestamp = new Date().toISOString();
+  const commit = { id, timestamp, table, mutation, payload };
   const commitStr = JSON.stringify(commit) + '\n';
   const result = await appendFile(datafile, commitStr).catch(e => e);
   if (result instanceof Error) {
