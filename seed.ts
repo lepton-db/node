@@ -8,7 +8,15 @@ import { fileManager } from './jsonl-file-manager';
     'create',
     {
       "id": "doj0ey0ofarfx02j",
-      "cash": 1000.5
+      "cash": 6500.54
+    }
+  )
+  await fm.commit(
+    'actors',
+    'create',
+    {
+      "id": "vhfxn0ujsrp1jrx7",
+      "cash": 2400.78
     }
   )
   // Transactions
@@ -38,6 +46,19 @@ import { fileManager } from './jsonl-file-manager';
       "price": 140.73
     },
   )
+  await fm.commit(
+    'transactions',
+    'create',
+    {
+      "id": "0xxw5ebcbtbvtu0x",
+      "actorId": "vhfxn0ujsrp1jrx7",
+      "timestamp": "2019-10-27T16:51:15.340Z",
+      "action": "buy",
+      "symbol": "TSLA",
+      "quantity": 2,
+      "price": 300.05
+    },
+  )
   // Positions
   await fm.commit(
     'positions',
@@ -57,6 +78,16 @@ import { fileManager } from './jsonl-file-manager';
       "actorId": "doj0ey0ofarfx02j",
       "symbol": "AAPL",
       "quantity": 4
+    }
+  )
+  await fm.commit(
+    'positions',
+    'create',
+    {
+      "id": "am0fk0hpiodd7dj8",
+      "actorId": "vhfxn0ujsrp1jrx7",
+      "symbol": "TSLA",
+      "quantity": 2
     }
   )
   const [data, err] = await fm.rebuild();
