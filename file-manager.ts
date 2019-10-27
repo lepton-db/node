@@ -8,7 +8,7 @@ const appendFile = util.promisify(fs.appendFile);
 import {
   Commit,
   CommitMaterial,
-  ReadableDatabase
+  ReadOnlyDatabase
 } from './entities';
 
 export function fileManager(dirpath) {
@@ -34,7 +34,7 @@ function makeCommiter(dirpath) {
   }
 }
 
-const makeRebuilder = dirpath => async (): Promise<Error|ReadableDatabase> => {
+const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
   const datafile = path.join(dirpath, 'commits.jsonl');
   const data = {};
   

@@ -12,15 +12,15 @@ export interface CommitMaterial {
   payload: any
 }
 
-export interface ReadableTable {
+export interface ReadOnlyTable {
   [id:string]: object
 }
 
-export interface ReadableDatabase {
-  [table:string]: ReadableTable
+export interface ReadOnlyDatabase {
+  [table:string]: ReadOnlyTable
 }
 
 export interface FileManager {
   commit: (cm:CommitMaterial) => Promise<Error|Commit>
-  rebuild: () => Promise<Error|ReadableDatabase>
+  rebuild: () => Promise<Error|ReadOnlyDatabase>
 }

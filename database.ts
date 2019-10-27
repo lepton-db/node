@@ -24,7 +24,8 @@
 import {
   Commit,
   CommitMaterial,
-  FileManager
+  FileManager,
+  ReadOnlyDatabase
 } from './entities';
 import { fileManager } from './file-manager';
 
@@ -35,7 +36,7 @@ export async function database(dirpath) {
 
   return {
     define,
-    commit: makeCommiter(fm),
+    commit: makeCommiter(fm, data),
     read: (table:string) => data[table],
   }
 }
@@ -44,8 +45,18 @@ function define(table, fields): CommitMaterial {
   return { table, mutation: 'define', payload: fields }
 }
 
-function makeCommiter(fm:FileManager) {
+function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
   return async function(cm:CommitMaterial): Promise<Error|Commit> {
-    return await fm.commit(cm);
+    const commit = await fm.commit(cm);
+    if (commit instanceof Error) return commit;
+
+    if (cm.mutation == 'define') {
+      data[cm.table] = {};
+    }
+
+    if (cm.mutation == 'create') {
+      const { id, ...fields } = cm.payload;
+      data[cm.table][id] = fields;
+    }
   }
 }

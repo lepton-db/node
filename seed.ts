@@ -2,7 +2,23 @@ import { database } from './database';
 
 (async () => {
   const data = await database(__dirname + '/data');
-  // Actors
+  // Define Tables
+  await data.commit({
+    table: 'actors',
+    mutation: 'define',
+    payload: {}
+  })
+  await data.commit({
+    table: 'positions',
+    mutation: 'define',
+    payload: {}
+  })
+  await data.commit({
+    table: 'transactions',
+    mutation: 'define',
+    payload: {}
+  })
+  // Populate Actors
   await data.commit({
     table: 'actors',
     mutation: 'create',
@@ -19,7 +35,7 @@ import { database } from './database';
       "cash": 2400.78
     }
   })
-  // Transactions
+  // Populate Transactions
   await data.commit({
     table: 'transactions',
     mutation: 'create',
@@ -59,7 +75,7 @@ import { database } from './database';
       "price": 300.05
     },
   })
-  // Positions
+  // Populate Positions
   await data.commit({
     table: 'positions',
     mutation: 'create',
