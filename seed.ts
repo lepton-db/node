@@ -106,7 +106,15 @@ import { database } from './database';
       "quantity": 2
     }
   })
-
+  // Update Actor
+  await data.commit({
+    table: 'actors',
+    mutation: 'update',
+    payload: {
+      "id": "doj0ey0ofarfx02j",
+      "cash": 3000,
+    }
+  })
   const actors = data.read('actors');
   const positions = data.read('positions');
   const transaction = data.read('transactions');
