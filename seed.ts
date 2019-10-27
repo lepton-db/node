@@ -7,7 +7,7 @@ import { fileManager } from './jsonl-file-manager';
     'actors',
     'create',
     {
-      "id": "a6320da84fabd25487377283b03b4c54",
+      "id": "doj0ey0ofarfx02j",
       "cash": 1000.5
     }
   )
@@ -16,29 +16,35 @@ import { fileManager } from './jsonl-file-manager';
     'transactions',
     'create',
     {
-      "id": "5e9f29dab3515b2dacafc755a10b578e",
-      "actorId": "a6320da84fabd25487377283b03b4c54",
-      "symbol": "MSFT",
-      "quantity": 7
+      "id": "bw4o00y6fsr6d7l7",
+      "actorId": "doj0ey0ofarfx02j",
+      "timestamp": "2019-10-26T15:42:37.667Z",
+      "action": "buy",
+      "symbol": "AAPL",
+      "quantity": 4,
+      "price": 246.58
     }
   )
   await fm.commit(
     'transactions',
     'create',
     {
-      "id": "ddf00017b5f6d6444a5f8425d32f5651",
-      "actorId": "a6320da84fabd25487377283b03b4c54",
-      "symbol": "AAPL",
-      "quantity": 4
-    }
+      "id": "ta0sobmbbb5yneeq",
+      "actorId": "doj0ey0ofarfx02j",
+      "timestamp": "2019-10-26T15:42:37.667Z",
+      "action": "buy",
+      "symbol": "MSFT",
+      "quantity": 7,
+      "price": 140.73
+    },
   )
   // Positions
   await fm.commit(
     'positions',
     'create',
     {
-      "id": "5e9f29dab3515b2dacafc755a10b578e",
-      "actorId": "a6320da84fabd25487377283b03b4c54",
+      "id": "bbz7b1h6nmonmxsb",
+      "actorId": "doj0ey0ofarfx02j",
       "symbol": "MSFT",
       "quantity": 7
     },
@@ -47,8 +53,8 @@ import { fileManager } from './jsonl-file-manager';
     'positions',
     'create',
     {
-      "id": "ddf00017b5f6d6444a5f8425d32f5651",
-      "actorId": "a6320da84fabd25487377283b03b4c54",
+      "id": "j4aed3lp51ylag9v",
+      "actorId": "doj0ey0ofarfx02j",
       "symbol": "AAPL",
       "quantity": 4
     }
