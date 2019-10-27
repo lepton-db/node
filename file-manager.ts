@@ -5,6 +5,7 @@ const util = require('util');
 const rl = require('readline');
 const { base36 } = require('./id');
 const appendFile = util.promisify(fs.appendFile);
+import { CommitMaterial } from './entities';
 
 export function fileManager(dirpath) {
   return {
@@ -13,7 +14,8 @@ export function fileManager(dirpath) {
   }
 }
 
-const makeCommiter = dirpath => async (table, mutation, payload) => {
+const makeCommiter = dirpath => async (material:CommitMaterial) => {
+  const { table, mutation, payload } = material;
   const datafile = path.join(dirpath, 'commits.jsonl');
   const id = base36();
   const timestamp = new Date().toISOString();
