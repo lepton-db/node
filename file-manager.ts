@@ -6,7 +6,6 @@ const rl = require('readline');
 const { base36 } = require('./id');
 const appendFile = util.promisify(fs.appendFile);
 import {
-  Commit,
   CommitMaterial,
   ReadOnlyDatabase
 } from './entities';
@@ -19,18 +18,23 @@ export function fileManager(dirpath) {
 }
 
 function makeCommiter(dirpath) {
-  return async function(cm:CommitMaterial): Promise<Error|Commit> {
-    const { table, mutation, payload } = cm;
+  return async function(...cms:CommitMaterial[]): Promise<Error|undefined> {
     const datafile = path.join(dirpath, '.commits');
-    const id = base36();
-    const timestamp = new Date().toISOString();
-    const commit = { id, timestamp, table, mutation, payload };
-    const commitStr = JSON.stringify(commit) + '\n';
-    const result = await appendFile(datafile, commitStr).catch(e => e);
+
+    // A string containing multiple lines of commits
+    const lines = cms.map(cm => {
+      const { table, mutation, payload } = cm;
+      const id = base36();
+      const timestamp = new Date().toISOString();
+      const commit = { id, timestamp, table, mutation, payload };
+      return JSON.stringify(commit) + '\n';
+    }).join('');
+    
+    // Append the string to the commit file
+    const result = await appendFile(datafile, lines).catch(e => e);
     if (result instanceof Error) {
-      return commitError(datafile, commit);
+      return commitError(datafile, cms);
     }
-    return commit;
   }
 }
 
@@ -63,7 +67,7 @@ const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
         data[commit.table][id] = { ...oldFields, ...newFields };
       }
   
-      if (commit.mutation == 'delete') {
+      if (commit.mutation == 'destroy') {
         delete data[commit.table][commit.payload.id]
       }
 
@@ -86,9 +90,9 @@ function withoutThrowing(fn, ...args) {
 }
 
 // New Error Type
-function commitError(datafile:string, commit:Commit) {
+function commitError(datafile:string, cms:CommitMaterial[]) {
   const e = new Error(`
-    Could not apply commit: ${JSON.stringify(commit)} to datafile ${datafile}
+    Could not apply commits: ${JSON.stringify(cms)} to datafile ${datafile}
   `.trim());
   e.name = 'CommitError';
   return e;

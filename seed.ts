@@ -3,131 +3,87 @@ import { database } from './database';
 (async () => {
   const data = await database(__dirname + '/data');
   // Define Tables
-  await data.commit({
-    table: 'actors',
-    mutation: 'define',
-  })
-  await data.commit({
-    table: 'positions',
-    mutation: 'define',
-  })
-  await data.commit({
-    table: 'transactions',
-    mutation: 'define',
-  })
+  await data.commit(
+    data.define('actors'),
+    data.define('positions'),
+    data.define('transactions'),
+  )
   // Populate Actors
-  await data.commit({
-    table: 'actors',
-    mutation: 'create',
-    payload: {
-      "id": "doj0ey0ofarfx02j",
+  const createdActors = await data.commit(
+    data.create('actors', {
       "cash": 6500.54
-    }
-  })
-  await data.commit({
-    table: 'actors',
-    mutation: 'create',
-    payload: {
-      "id": "7jkubclph9ogoe28",
-      "cash": 1000 
-    }
-  })
-  await data.commit({
-    table: 'actors',
-    mutation: 'create',
-    payload: {
-      "id": "vhfxn0ujsrp1jrx7",
+    }),
+    data.create('actors', {
+      "cash": 1000
+    }),
+    data.create('actors', {
       "cash": 2400.78
-    }
-  })
+    }),
+  );
+  const actorIds = Object.keys(createdActors);
+
   // Populate Transactions
-  await data.commit({
-    table: 'transactions',
-    mutation: 'create',
-    payload: {
-      "id": "bw4o00y6fsr6d7l7",
-      "actorId": "doj0ey0ofarfx02j",
+  const createdTransactions = await data.commit(
+    data.create('transactions', {
+      "actorId": actorIds[0],
       "timestamp": "2019-10-26T15:42:37.667Z",
       "action": "buy",
       "symbol": "AAPL",
       "quantity": 4,
       "price": 246.58
-    }
-  })
-  await data.commit({
-    table: 'transactions',
-    mutation: 'create',
-    payload: {
-      "id": "ta0sobmbbb5yneeq",
-      "actorId": "doj0ey0ofarfx02j",
+    }),
+    data.create('transactions', {
+      "actorId": actorIds[0],
       "timestamp": "2019-10-26T15:42:37.667Z",
       "action": "buy",
       "symbol": "MSFT",
       "quantity": 7,
       "price": 140.73
-    },
-  })
-  await data.commit({
-    table: 'transactions',
-    mutation: 'create',
-    payload: {
-      "id": "0xxw5ebcbtbvtu0x",
-      "actorId": "vhfxn0ujsrp1jrx7",
+    }),
+    data.create('transactions', {
+      "actorId": actorIds[1],
       "timestamp": "2019-10-27T16:51:15.340Z",
       "action": "buy",
       "symbol": "TSLA",
       "quantity": 2,
       "price": 300.05
-    },
-  })
+    }),
+  );
+
+
   // Populate Positions
-  await data.commit({
-    table: 'positions',
-    mutation: 'create',
-    payload: {
-      "id": "bbz7b1h6nmonmxsb",
-      "actorId": "doj0ey0ofarfx02j",
+  await data.commit(
+    data.create('positions', {
+      "actorId": actorIds[0],
       "symbol": "MSFT",
       "quantity": 7
-    },
-  })
-  await data.commit({
-    table: 'positions',
-    mutation: 'create',
-    payload: {
-      "id": "j4aed3lp51ylag9v",
-      "actorId": "doj0ey0ofarfx02j",
+    }),
+    data.create('positions', {
+      "actorId": actorIds[0],
       "symbol": "AAPL",
       "quantity": 4
-    }
-  })
-  await data.commit({
-    table: 'positions',
-    mutation: 'create',
-    payload: {
-      "id": "am0fk0hpiodd7dj8",
-      "actorId": "vhfxn0ujsrp1jrx7",
+    }),
+    data.create('positions', {
+      "actorId": actorIds[1],
       "symbol": "TSLA",
       "quantity": 2
-    }
-  })
+    }),
+  )
+
   // Update Actor
-  await data.commit({
-    table: 'actors',
-    mutation: 'update',
-    payload: {
-      "id": "doj0ey0ofarfx02j",
+  await data.commit(
+    data.update('actors', {
+      "id": actorIds[0],
       "cash": 3000,
-    }
-  });
+    }),
+  );
   // Delete Actor
-  await data.commit({
-    table: 'actors',
-    mutation: 'delete',
-    payload: {
-      "id": "7jkubclph9ogoe28",
-    }
-  });
+  await data.commit(
+    data.destroy('actors', {
+      "id": actorIds[2],
+    }),
+  );
+
   const actors = data.read('actors');
   const positions = data.read('positions');
   const transaction = data.read('transactions');

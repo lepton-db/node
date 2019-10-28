@@ -21,13 +21,33 @@
 //   }),
 // )
 
+// data.commit(
+//   data.create('actors', {
+//     cash: 5000
+//   }),
+//   data.create('actors', {
+//     cash: 5000
+//   }),
+//   data.define('transactions', {
+//     actorId: data.ref('actors'),
+//     timestamp: data.iso,
+//     action: data.enum('buy', 'sell'),
+//     symbol: data.str,
+//     quantity: data.int,
+//     price: data.num,
+//   }),
+// )
+
 import {
-  Commit,
   CommitMaterial,
   FileManager,
-  ReadOnlyDatabase
+  ReadOnlyDatabase,
+  Table,
+  Record,
+  RecordPayload,
 } from './entities';
 import { fileManager } from './file-manager';
+import { base36 } from './id';
 
 export async function database(dirpath) {
   const fm = fileManager(dirpath)
@@ -36,13 +56,40 @@ export async function database(dirpath) {
 
   return {
     define,
+    create,
+    update,
+    destroy,
     commit: makeCommiter(fm, data),
     read: (table:string) => readOnly(data[table]),
   }
 }
 
-function define(table, fields): CommitMaterial {
+function define(table:string): CommitMaterial {
   return { table, mutation: 'define' }
+}
+
+function create(table:string, fields:Record): CommitMaterial {
+  return {
+    table,
+    mutation: 'create',
+    payload: { id: base36(), ...fields },
+  }
+}
+
+function update(table:string, fields:RecordPayload): CommitMaterial {
+  return {
+    table,
+    mutation: 'update',
+    payload: fields,
+  }
+}
+
+function destroy(table:string, fields:RecordPayload): CommitMaterial {
+  return {
+    table,
+    mutation: 'destroy',
+    payload: fields,
+  }
 }
 
 function readOnly(table) {
@@ -54,28 +101,41 @@ function readOnly(table) {
 }
 
 function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
-  return async function(cm:CommitMaterial): Promise<Error|Commit> {
-    const commit = await fm.commit(cm);
-    if (commit instanceof Error) return commit;
+  return async function(...cms:CommitMaterial[]): Promise<Error|Table> {
 
-    if (cm.mutation == 'define') {
-      const { ...fields } = cm.payload;
-      data[cm.table] = {};
-    }
+    const affectedRecords = {};
 
-    if (cm.mutation == 'create') {
-      const { id, ...fields } = cm.payload;
-      data[cm.table][id] = fields;
-    }
+    // Apply mutations to file
+    const write = await fm.commit(...cms);
+    if (write instanceof Error) return write;
+    
+    // Apply mutations to memory
+    cms.forEach(async cm => {
+ 
+      if (cm.mutation == 'define') {
+        data[cm.table] = {};
+      }
+  
+      else if (cm.mutation == 'create') {
+        const { id, ...fields } = cm.payload;
+        data[cm.table][id] = fields;
+        affectedRecords[id] = fields;
+      }
+      
+      else if (cm.mutation == 'update') {
+        const { id, ...newFields } = cm.payload;
+        const { ...oldFields } = data[cm.table][id];
+        const updated = { ...oldFields, ...newFields };
+        data[cm.table][id] = updated;
+        affectedRecords[id] = updated;
+      }
+  
+      else if (cm.mutation == 'destroy') {
+        delete data[cm.table][cm.payload.id]
+      }
+    })
 
-    if (cm.mutation == 'update') {
-      const { id, ...newFields } = cm.payload;
-      const { ...oldFields } = data[cm.table][id];
-      data[cm.table][id] = { ...oldFields, ...newFields };
-    }
+    return affectedRecords;
 
-    if (cm.mutation == 'delete') {
-      delete data[cm.table][cm.payload.id]
-    }
   }
 }

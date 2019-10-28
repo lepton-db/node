@@ -8,7 +8,7 @@ export interface Commit {
 
 export interface CommitMaterial {
   table: string
-  mutation: 'define' | 'create' | 'update' | 'delete'
+  mutation: 'define' | 'create' | 'update' | 'destroy'
   payload?: RecordPayload
 }
 
@@ -31,11 +31,13 @@ export interface Table {
   [id:string]: Record
 }
 
+export type CommitEffects = Array<Error | Record | undefined>
+
 export interface ReadOnlyDatabase {
   [table:string]: Table
 }
 
 export interface FileManager {
-  commit: (cm:CommitMaterial) => Promise<Error|Commit>
+  commit: (...cms:CommitMaterial[]) => Promise<Error|undefined>
   rebuild: () => Promise<Error|ReadOnlyDatabase>
 }
