@@ -12,10 +12,6 @@ export interface CommitMaterial {
   payload: RecordPayload | DefinitionPayload
 }
 
-export interface Record {
-  [field:string]: number | string | boolean
-}
-
 // Commit payload for defining new tables
 export interface DefinitionPayload {
   [field:string]: any
@@ -27,12 +23,16 @@ export interface RecordPayload {
   [field:string]: number | string | boolean
 }
 
-export interface ReadOnlyTable {
+export interface Record {
+  [field:string]: number | string | boolean
+}
+
+export interface Table {
   [id:string]: Record
 }
 
 export interface ReadOnlyDatabase {
-  [table:string]: ReadOnlyTable
+  [table:string]: Table
 }
 
 export interface FileManager {
