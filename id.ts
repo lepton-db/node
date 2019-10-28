@@ -1,5 +1,5 @@
 /**
- * Generate random 64 char hex ids
+ * Generate probabilistically unique ids
  */
 
 import { randomBytes } from 'crypto';

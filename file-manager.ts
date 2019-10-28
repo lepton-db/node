@@ -21,7 +21,7 @@ export function fileManager(dirpath) {
 function makeCommiter(dirpath) {
   return async function(cm:CommitMaterial): Promise<Error|Commit> {
     const { table, mutation, payload } = cm;
-    const datafile = path.join(dirpath, 'commits.jsonl');
+    const datafile = path.join(dirpath, '.commits');
     const id = base36();
     const timestamp = new Date().toISOString();
     const commit = { id, timestamp, table, mutation, payload };
@@ -35,7 +35,7 @@ function makeCommiter(dirpath) {
 }
 
 const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
-  const datafile = path.join(dirpath, 'commits.jsonl');
+  const datafile = path.join(dirpath, '.commits');
   const data = {};
   
   return new Promise(async (resolve, reject) => {
