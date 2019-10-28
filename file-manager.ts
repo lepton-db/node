@@ -47,14 +47,29 @@ const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
     // Read the commit file line by line, parsing each as JSON
     lines.on('line', line => {
       const commit = JSON.parse(line);
-      if (commit.mutation == 'create') {
-        if (!data[commit.table]) data[commit.table] = {};
-        const { id, ...rest  } = commit.payload;
-        data[commit.table][id] = { ...rest };
+
+      if (commit.mutation == 'define') {
+        data[commit.table] = {};
       }
+
+      if (commit.mutation == 'create') {
+        const { id, ...fields } = commit.payload;
+        data[commit.table][id] = fields;
+      }
+  
+      if (commit.mutation == 'update') {
+        const { id, ...newFields } = commit.payload;
+        const { ...oldFields } = data[commit.table][id];
+        data[commit.table][id] = { ...oldFields, ...newFields };
+      }
+  
+      if (commit.mutation == 'delete') {
+        delete data[commit.table][commit.payload.id]
+      }
+
     })
 
-    lines.on('error', error => reject(rebuildError(datafile)))
+    lines.on('error', e => reject(rebuildError(datafile)))
     lines.on('close', () => resolve(data));
   })
 }
