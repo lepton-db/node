@@ -72,5 +72,9 @@ function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
       const { ...oldFields } = data[cm.table][id];
       data[cm.table][id] = { ...oldFields, ...newFields };
     }
+
+    if (cm.mutation == 'delete') {
+      delete data[cm.table][cm.payload.id]
+    }
   }
 }

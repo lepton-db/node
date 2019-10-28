@@ -31,6 +31,14 @@ import { database } from './database';
     table: 'actors',
     mutation: 'create',
     payload: {
+      "id": "7jkubclph9ogoe28",
+      "cash": 1000 
+    }
+  })
+  await data.commit({
+    table: 'actors',
+    mutation: 'create',
+    payload: {
       "id": "vhfxn0ujsrp1jrx7",
       "cash": 2400.78
     }
@@ -114,7 +122,15 @@ import { database } from './database';
       "id": "doj0ey0ofarfx02j",
       "cash": 3000,
     }
-  })
+  });
+  // Delete Actor
+  await data.commit({
+    table: 'actors',
+    mutation: 'delete',
+    payload: {
+      "id": "7jkubclph9ogoe28",
+    }
+  });
   const actors = data.read('actors');
   const positions = data.read('positions');
   const transaction = data.read('transactions');
