@@ -6,17 +6,14 @@ import { database } from './database';
   await data.commit({
     table: 'actors',
     mutation: 'define',
-    payload: {}
   })
   await data.commit({
     table: 'positions',
     mutation: 'define',
-    payload: {}
   })
   await data.commit({
     table: 'transactions',
     mutation: 'define',
-    payload: {}
   })
   // Populate Actors
   await data.commit({

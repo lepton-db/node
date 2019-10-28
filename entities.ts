@@ -9,7 +9,7 @@ export interface Commit {
 export interface CommitMaterial {
   table: string
   mutation: 'define' | 'create' | 'update' | 'delete'
-  payload: RecordPayload | DefinitionPayload
+  payload?: RecordPayload
 }
 
 // Commit payload for defining new tables

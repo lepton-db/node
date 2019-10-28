@@ -42,7 +42,7 @@ export async function database(dirpath) {
 }
 
 function define(table, fields): CommitMaterial {
-  return { table, mutation: 'define', payload: fields }
+  return { table, mutation: 'define' }
 }
 
 function readOnly(table) {
@@ -59,6 +59,7 @@ function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
     if (commit instanceof Error) return commit;
 
     if (cm.mutation == 'define') {
+      const { ...fields } = cm.payload;
       data[cm.table] = {};
     }
 
