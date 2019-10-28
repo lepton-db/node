@@ -8,12 +8,27 @@ export interface Commit {
 
 export interface CommitMaterial {
   table: string
-  mutation: string
-  payload: any
+  mutation: 'define' | 'create' | 'update' | 'delete'
+  payload: RecordPayload | DefinitionPayload
+}
+
+export interface Record {
+  [field:string]: number | string | boolean
+}
+
+// Commit payload for defining new tables
+export interface DefinitionPayload {
+  [field:string]: any
+}
+
+// Commit payload for most mutation types
+export interface RecordPayload {
+  id: string
+  [field:string]: number | string | boolean
 }
 
 export interface ReadOnlyTable {
-  [id:string]: object
+  [id:string]: Record
 }
 
 export interface ReadOnlyDatabase {
