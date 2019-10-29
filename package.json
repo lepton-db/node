@@ -8,6 +8,10 @@
     "build": "npx tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/craigfay/roog.git"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
