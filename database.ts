@@ -1,43 +1,3 @@
-// USAGE:
-// const data = database('/data');
-
-// data.commit(
-//   data.define('actors', {
-//     cash: data.num,
-//   }),
-//   data.define('positions', {
-//     cash: data.num,
-//     actorId: data.ref('actors'),
-//     symbol: data.str,
-//     quantity: data.int
-//   }),
-//   data.define('transactions', {
-//     actorId: data.ref('actors'),
-//     timestamp: data.iso,
-//     action: data.enum('buy', 'sell'),
-//     symbol: data.str,
-//     quantity: data.int,
-//     price: data.num,
-//   }),
-// )
-
-// data.commit(
-//   data.create('actors', {
-//     cash: 5000
-//   }),
-//   data.create('actors', {
-//     cash: 5000
-//   }),
-//   data.define('transactions', {
-//     actorId: data.ref('actors'),
-//     timestamp: data.iso,
-//     action: data.enum('buy', 'sell'),
-//     symbol: data.str,
-//     quantity: data.int,
-//     price: data.num,
-//   }),
-// )
-
 import {
   CommitMaterial,
   FileManager,
@@ -51,6 +11,10 @@ import {
 import { fileManager } from './file-manager';
 import { base36 } from './id';
 
+// Used to create a git-like database that only reads from disk once on startup.
+// All other reads are from memory, and mutations are relatively fast.
+// Being git-like means that the database can potentially be restored to any
+// previous point in it's history.
 export async function database(dirpath): Promise<Database> {
   const fm = fileManager(dirpath)
   const data = await fm.rebuild();
@@ -67,6 +31,8 @@ export async function database(dirpath): Promise<Database> {
   }
 }
 
+// Return a copy of a table for reading.
+// Mutating it will not affect the original.
 function readOnly(table) {
   const copy = {}
   for (const [id, fields] of Object.entries(table)) {
@@ -84,8 +50,9 @@ function makeIdGetter(data:ReadOnlyDatabase) {
   }
 }
 
+// Create CommitMaterial that can be used to define new tables
 function define(table:string): CommitMaterial {
-  return { table, mutation: 'define' }
+  return { table, mutation: 'define' };
 }
 
 // Guarantee that no id collisions occur
@@ -113,6 +80,7 @@ function makeCreator(data:ReadOnlyDatabase) {
   }
 }
 
+// Create CommitMaterial that can be used to update existing records
 function update(table:string, fields:RecordPayload): CommitMaterial {
   return {
     table,
@@ -121,6 +89,7 @@ function update(table:string, fields:RecordPayload): CommitMaterial {
   }
 }
 
+// Create CommitMaterial that can be used to delete existing records
 function destroy(table:string, fields:RecordPayload): CommitMaterial {
   return {
     table,
@@ -129,9 +98,9 @@ function destroy(table:string, fields:RecordPayload): CommitMaterial {
   }
 }
 
+// Create a function that can use CommitMaterial to persist mutations to file
 function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
   return async function(...cms:CommitMaterial[]): Promise<Error|Table> {
-
     const affectedRecords = {};
 
     // Apply mutations to file
@@ -140,17 +109,14 @@ function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
     
     // Apply mutations to memory
     cms.forEach(async cm => {
- 
       if (cm.mutation == 'define') {
         data[cm.table] = {};
       }
-  
       else if (cm.mutation == 'create') {
         const { id, ...fields } = cm.payload;
         data[cm.table][id] = fields;
         affectedRecords[id] = fields;
       }
-      
       else if (cm.mutation == 'update') {
         const { id, ...newFields } = cm.payload;
         const { ...oldFields } = data[cm.table][id];
@@ -158,7 +124,6 @@ function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
         data[cm.table][id] = updated;
         affectedRecords[id] = updated;
       }
-  
       else if (cm.mutation == 'destroy') {
         delete data[cm.table][cm.payload.id]
       }
