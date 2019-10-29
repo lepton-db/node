@@ -60,7 +60,7 @@ export async function database(dirpath): Promise<Database> {
     read: (table:string) => readOnly(data[table]),
     id: id => makeIdGetter(data)(id),
     define,
-    create,
+    create: (table:string, fields:Record) => makeCreator(data)(table, fields),
     update,
     destroy,
     commit: makeCommiter(fm, data),
@@ -88,11 +88,28 @@ function define(table:string): CommitMaterial {
   return { table, mutation: 'define' }
 }
 
-function create(table:string, fields:Record): CommitMaterial {
-  return {
-    table,
-    mutation: 'create',
-    payload: { id: base36(), ...fields },
+// Guarantee that no id collisions occur
+function idGenerator(data:ReadOnlyDatabase) {
+  return function() {
+    let id = base36();
+    for (const records of Object.values(data)) {
+      if (records[id]) return idGenerator(data)();
+    }
+    return id;
+  }
+}
+
+// Given a database, create a function that can be used to generate
+// CommitMaterial with a mutation value of "create".
+// Ultimately, this will be used to create new records with no id collisions
+function makeCreator(data:ReadOnlyDatabase) {
+  return function create(table:string, fields:Record): CommitMaterial {
+    const id = idGenerator(data)();
+    return {
+      table,
+      mutation: 'create',
+      payload: { id, ...fields },
+    }
   }
 }
 
