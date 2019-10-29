@@ -45,6 +45,7 @@ import {
   Table,
   Record,
   RecordPayload,
+  idLookup,
 } from './entities';
 import { fileManager } from './file-manager';
 import { base36 } from './id';
@@ -55,12 +56,30 @@ export async function database(dirpath) {
   if (data instanceof Error) throw data;
 
   return {
+    read: (table:string) => readOnly(data[table]),
+    id: id => makeIdGetter(data)(id),
     define,
     create,
     update,
     destroy,
     commit: makeCommiter(fm, data),
-    read: (table:string) => readOnly(data[table]),
+  }
+}
+
+function readOnly(table) {
+  const copy = {}
+  for (const [id, fields] of Object.entries(table)) {
+    copy[id] = { ...fields }
+  }
+  return copy;
+}
+
+// Get a record by id from any table it may be in
+function makeIdGetter(data:ReadOnlyDatabase) {
+  return function (id:string): idLookup|undefined {
+    for (const [table, records] of Object.entries(data)) {
+      if (records[id]) return { record: records[id], table };
+    }
   }
 }
 
@@ -90,14 +109,6 @@ function destroy(table:string, fields:RecordPayload): CommitMaterial {
     mutation: 'destroy',
     payload: fields,
   }
-}
-
-function readOnly(table) {
-  const copy = {}
-  for (const [id, fields] of Object.entries(table)) {
-    copy[id] = { ...fields }
-  }
-  return copy;
 }
 
 function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
@@ -134,8 +145,6 @@ function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
         delete data[cm.table][cm.payload.id]
       }
     })
-
     return affectedRecords;
-
   }
 }

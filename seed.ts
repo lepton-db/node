@@ -84,8 +84,11 @@ import { database } from './database';
     }),
   );
 
+  const actor = data.id(actorIds[0]);
+  
   const actors = data.read('actors');
   const positions = data.read('positions');
   const transaction = data.read('transactions');
   console.log({ actors, positions, transaction })
+  console.log(actor);
 })()

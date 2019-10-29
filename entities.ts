@@ -27,6 +27,11 @@ export interface Record {
   [field:string]: number | string | boolean
 }
 
+export interface idLookup {
+  record:Record
+  table:string
+}
+
 export interface Table {
   [id:string]: Record
 }
