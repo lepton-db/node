@@ -8,7 +8,7 @@ const appendFile = util.promisify(fs.appendFile);
 import {
   CommitMaterial,
   ReadOnlyDatabase
-} from '../entities';
+} from './entities';
 
 export function fileManager(dirpath) {
   return {
