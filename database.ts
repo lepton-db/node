@@ -41,6 +41,7 @@
 import {
   CommitMaterial,
   FileManager,
+  Database,
   ReadOnlyDatabase,
   Table,
   Record,
@@ -50,7 +51,7 @@ import {
 import { fileManager } from './file-manager';
 import { base36 } from './id';
 
-export async function database(dirpath) {
+export async function database(dirpath): Promise<Database> {
   const fm = fileManager(dirpath)
   const data = await fm.rebuild();
   if (data instanceof Error) throw data;
