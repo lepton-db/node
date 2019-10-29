@@ -51,6 +51,7 @@ export interface FileManager {
 export interface Database {
   read: (table:string) => Table
   id: (id:string) => idLookup|undefined
+  graph?: any // experimental
   define: (table:string) => CommitMaterial
   create: (table:string, fields:Record) => CommitMaterial
   update: (table:string, fields:RecordPayload) => CommitMaterial

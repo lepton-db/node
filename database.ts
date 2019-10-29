@@ -23,6 +23,7 @@ export async function database(dirpath): Promise<Database> {
   return {
     read: (table:string) => readOnly(data[table]),
     id: id => makeIdGetter(data)(id),
+    graph: id => makeGraphGetter(data)(id),
     define,
     create: (table:string, fields:Record) => makeCreator(data)(table, fields),
     update,
@@ -39,6 +40,35 @@ function readOnly(table) {
     copy[id] = { ...fields }
   }
   return copy;
+}
+
+// Determine if a field is acting as a foreign key
+function isReference(name:string): boolean {
+  return name.slice(-2) == 'Id';
+}
+
+// Determine the table that a foreign key is referencing
+function referenceTable(name:string): string {
+  return name.slice(0, -2);
+}
+
+function makeGraphGetter(data:ReadOnlyDatabase) {
+  return function(id:string) {
+    const { record, table } = makeIdGetter(data)(id);
+    const graph:any = { ...record };
+    for (const [foreignTable, records] of Object.entries(data)) {
+      for (const foreignRecord of Object.values(records)) {
+        for (const foreignField of Object.keys(foreignRecord)) {
+          if (foreignField == table + 'Id') {
+            if (!graph[foreignTable]) graph[foreignTable] = [];
+            delete foreignRecord[table + 'Id'];
+            graph[foreignTable].push(foreignRecord);
+          }
+        }
+      }
+    }
+    return graph;
+  }
 }
 
 // Get a record by id from any table it may be in
