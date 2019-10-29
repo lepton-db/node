@@ -5,7 +5,6 @@ import {
   ReadOnlyDatabase,
   Table,
   Record,
-  RecordPayload,
   idLookup,
 } from './entities';
 import { fileManager } from './file-manager';
@@ -25,7 +24,7 @@ export async function database(dirpath): Promise<Database> {
     id: id => makeIdGetter(data)(id),
     graph: id => makeGraphGetter(data)(id),
     define,
-    create: (table:string, fields:Record) => makeCreator(data)(table, fields),
+    create: (table:string, options:{ fields:Record }) => makeCreator(data)(table, options),
     update,
     destroy,
     commit: makeCommiter(fm, data),
@@ -82,8 +81,8 @@ function makeIdGetter(data:ReadOnlyDatabase) {
 }
 
 // Create CommitMaterial that can be used to define new tables
-function define(table:string): CommitMaterial {
-  return { table, mutation: 'define' };
+function define(table:string, options: { referenceField: string }): CommitMaterial {
+  return { table, mutation: 'define', payload: options };
 }
 
 // Guarantee that no id collisions occur
@@ -101,31 +100,32 @@ function idGenerator(data:ReadOnlyDatabase) {
 // CommitMaterial with a mutation value of "create".
 // Ultimately, this will be used to create new records with no id collisions
 function makeCreator(data:ReadOnlyDatabase) {
-  return function create(table:string, fields:Record): CommitMaterial {
+  return function create(table:string, payload:{ fields:Record }): CommitMaterial {
+    const { fields } = payload;
     const id = idGenerator(data)();
     return {
       table,
       mutation: 'create',
-      payload: { id, ...fields },
+      payload: { id, fields},
     }
   }
 }
 
 // Create CommitMaterial that can be used to update existing records
-function update(table:string, fields:RecordPayload): CommitMaterial {
+function update(table:string, payload:{ id:string, fields:Record }): CommitMaterial {
   return {
     table,
     mutation: 'update',
-    payload: fields,
+    payload,
   }
 }
 
 // Create CommitMaterial that can be used to delete existing records
-function destroy(table:string, fields:RecordPayload): CommitMaterial {
+function destroy(table:string, payload: { id:string }): CommitMaterial {
   return {
     table,
     mutation: 'destroy',
-    payload: fields,
+    payload,
   }
 }
 
@@ -144,12 +144,12 @@ function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
         data[cm.table] = {};
       }
       else if (cm.mutation == 'create') {
-        const { id, ...fields } = cm.payload;
+        const { id, fields } = cm.payload;
         data[cm.table][id] = fields;
         affectedRecords[id] = fields;
       }
       else if (cm.mutation == 'update') {
-        const { id, ...newFields } = cm.payload;
+        const { id, fields: newFields } = cm.payload;
         const { ...oldFields } = data[cm.table][id];
         const updated = { ...oldFields, ...newFields };
         data[cm.table][id] = updated;

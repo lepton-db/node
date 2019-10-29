@@ -9,18 +9,7 @@ export interface Commit {
 export interface CommitMaterial {
   table: string
   mutation: 'define' | 'create' | 'update' | 'destroy'
-  payload?: RecordPayload
-}
-
-// Commit payload for defining new tables
-export interface DefinitionPayload {
-  [field:string]: any
-}
-
-// Commit payload for most mutation types
-export interface RecordPayload {
-  id: string
-  [field:string]: number | string | boolean
+  payload?: any
 }
 
 export interface Record {
@@ -52,9 +41,9 @@ export interface Database {
   read: (table:string) => Table
   id: (id:string) => idLookup|undefined
   graph?: any // experimental
-  define: (table:string) => CommitMaterial
-  create: (table:string, fields:Record) => CommitMaterial
-  update: (table:string, fields:RecordPayload) => CommitMaterial
-  destroy: (table:string, fields:RecordPayload) => CommitMaterial
+  define: (table:string, { referenceField:string }) => CommitMaterial
+  create: (table:string, { fields:Record }) => CommitMaterial
+  update: (table:string, { id:string, fields:Record }) => CommitMaterial
+  destroy: (table:string, { id:string }) => CommitMaterial
   commit: (...cms:CommitMaterial[]) => Promise<Error|Table>
 }
