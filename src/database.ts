@@ -6,6 +6,9 @@ import {
   Table,
   Record,
   idLookup,
+  DestructionPayload,
+  UpdatePayload,
+  CreationPayload,
 } from './entities';
 import { fileManager } from './file-manager';
 import { base36 } from './id';
@@ -100,7 +103,7 @@ function idGenerator(data:ReadOnlyDatabase) {
 // CommitMaterial with a mutation value of "create".
 // Ultimately, this will be used to create new records with no id collisions
 function makeCreator(data:ReadOnlyDatabase) {
-  return function create(table:string, payload:{ fields:Record }): CommitMaterial {
+  return function create(table:string, payload:CreationPayload): CommitMaterial {
     const { fields } = payload;
     const id = idGenerator(data)();
     return {
@@ -112,7 +115,7 @@ function makeCreator(data:ReadOnlyDatabase) {
 }
 
 // Create CommitMaterial that can be used to update existing records
-function update(table:string, payload:{ id:string, fields:Record }): CommitMaterial {
+function update(table:string, payload:UpdatePayload): CommitMaterial {
   return {
     table,
     mutation: 'update',
@@ -121,7 +124,7 @@ function update(table:string, payload:{ id:string, fields:Record }): CommitMater
 }
 
 // Create CommitMaterial that can be used to delete existing records
-function destroy(table:string, payload: { id:string }): CommitMaterial {
+function destroy(table:string, payload:DestructionPayload): CommitMaterial {
   return {
     table,
     mutation: 'destroy',

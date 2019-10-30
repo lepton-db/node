@@ -12,6 +12,23 @@ export interface CommitMaterial {
   payload?: any
 }
 
+export interface DefinitionPayload {
+  referenceField: string 
+}
+
+export interface CreationPayload {
+  fields: Record
+}
+
+export interface UpdatePayload {
+  id: string
+  fields: Record
+}
+
+export interface DestructionPayload {
+  id: string
+}
+
 export interface Record {
   [field:string]: number | string | boolean
 }
