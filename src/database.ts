@@ -21,10 +21,9 @@ export async function database(dirpath): Promise<Database> {
   const fm = fileManager(dirpath)
   const db = await fm.rebuild();
   if (db instanceof Error) throw db;
-  const { data, meta } = db;
 
   return {
-    read: (table:string) => readOnly(data[table]),
+    read: (table:string) => readOnly(db.data[table]),
     id: id => makeIdGetter(db)(id),
     graph: id => makeGraphGetter(db)(id),
     define,
@@ -46,26 +45,23 @@ function readOnly(table) {
   return copy;
 }
 
-// Determine if a field is acting as a foreign key
-function isReference(name:string): boolean {
-  return name.slice(-2) == 'Id';
-}
 
-// Determine the table that a foreign key is referencing
-function referenceTable(name:string): string {
-  return name.slice(0, -2);
-}
-
+// Create an object that represents a record and all its relationships
 function makeGraphGetter(db:ReadOnlyDatabase) {
   return function(id:string) {
     const { record, table } = makeIdGetter(db)(id);
     const graph:any = { ...record };
+    const { referenceField } = db.meta[table];
+
+    // Look for the reference field in all other records
     for (const [foreignTable, records] of Object.entries(db.data)) {
       for (const foreignRecord of Object.values(records)) {
         for (const foreignField of Object.keys(foreignRecord)) {
-          if (foreignField == table + 'Id') {
+
+          // See if the field is a reference to the original record
+          if (foreignField == referenceField) {
             if (!graph[foreignTable]) graph[foreignTable] = [];
-            delete foreignRecord[table + 'Id'];
+            delete foreignRecord[referenceField];
             graph[foreignTable].push(foreignRecord);
           }
         }
@@ -146,6 +142,8 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
     cms.forEach(async cm => {
       if (cm.mutation == 'define') {
         db.data[cm.table] = {};
+        db.meta[cm.table] = {};
+        db.meta[cm.table].referenceField = cm.payload.referenceField;
       }
       else if (cm.mutation == 'create') {
         const { id, fields } = cm.payload;

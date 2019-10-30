@@ -56,7 +56,8 @@ const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
       if (commit.mutation == 'define') {
         data[commit.table] = {};
         meta[commit.table] = {};
-        meta[commit.table].referenceField = [commit.payload.referenceField];
+        meta[commit.table].referenceField = commit.payload.referenceField;
+        console.log(meta);
       }
       if (commit.mutation == 'create') {
         const { id, fields } = commit.payload;

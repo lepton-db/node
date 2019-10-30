@@ -4,29 +4,29 @@ import { database } from './database';
   const data = await database(__dirname + '/data');
   // Define Tables
   await data.commit(
-    data.define('actor', {
+    data.define('actors', {
       referenceField: 'actorId'
     }),
-    data.define('transaction', {
+    data.define('transactions', {
       referenceField: 'transactionId'
     }),
-    data.define('position', {
+    data.define('positions', {
       referenceField: 'positionId'
     }),
   )
   // Populate actor
   const createdactor = await data.commit(
-    data.create('actor', {
+    data.create('actors', {
       fields: {
         cash: 6500.54
       }
     }),
-    data.create('actor', {
+    data.create('actors', {
       fields: {
         cash: 1000
       }
     }),
-    data.create('actor', {
+    data.create('actors', {
       fields: {
         cash: 2400.78
       }
@@ -36,7 +36,7 @@ import { database } from './database';
 
   // Populate transaction
   const createdtransaction = await data.commit(
-    data.create('transaction', {
+    data.create('transactions', {
       fields: {
         actorId: actorIds[0],
         timestamp: "2019-10-26T15:42:37.667Z",
@@ -46,7 +46,7 @@ import { database } from './database';
         price: 246.58
       }
     }),
-    data.create('transaction', {
+    data.create('transactions', {
       fields: {
         actorId: actorIds[0],
         timestamp: "2019-10-26T15:42:37.667Z",
@@ -56,7 +56,7 @@ import { database } from './database';
         price: 140.73
       }
     }),
-    data.create('transaction', {
+    data.create('transactions', {
       fields: {
         actorId: actorIds[1],
         timestamp: "2019-10-27T16:51:15.340Z",
@@ -71,21 +71,21 @@ import { database } from './database';
 
   // Populate position
   await data.commit(
-    data.create('position', {
+    data.create('positions', {
       fields: {
         actorId: actorIds[0],
         symbol: "MSFT",
         quantity: 7
       }
     }),
-    data.create('position', {
+    data.create('positions', {
       fields: {
         actorId: actorIds[0],
         symbol: "AAPL",
         quantity: 4
       }
     }),
-    data.create('position', {
+    data.create('positions', {
       fields: {
         actorId: actorIds[1],
         symbol: "TSLA",
@@ -96,7 +96,7 @@ import { database } from './database';
 
   // Update Actor
   await data.commit(
-    data.update('actor', {
+    data.update('actors', {
       id: actorIds[0],
       fields: {
         "cash": 3000,
@@ -105,16 +105,15 @@ import { database } from './database';
   );
   // Delete Actor
   await data.commit(
-    data.destroy('actor', {
+    data.destroy('actors', {
       id: actorIds[2],
     }),
   );
 
   const actorGraph = data.graph(actorIds[0]);
   
-  const actors = data.read('actor');
-  const positions = data.read('position');
-  const transactions = data.read('transaction');
-  // console.log({ actors, positions, transactions })
+  const actors = data.read('actors');
+  const positions = data.read('positions');
+  const transactions = data.read('transactions');
   console.log(actorGraph);
 })()
