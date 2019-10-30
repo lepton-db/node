@@ -41,6 +41,7 @@ function makeCommiter(dirpath) {
 const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
   const datafile = path.join(dirpath, '.commits');
   const data = {};
+  const meta = {};
   
   return new Promise(async (resolve, reject) => {
     // Configure Input Stream
@@ -54,6 +55,8 @@ const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
 
       if (commit.mutation == 'define') {
         data[commit.table] = {};
+        meta[commit.table] = {};
+        meta[commit.table].referenceField = [commit.payload.referenceField];
       }
       if (commit.mutation == 'create') {
         const { id, fields } = commit.payload;
@@ -71,7 +74,7 @@ const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
     })
 
     lines.on('error', e => reject(rebuildError(datafile)))
-    lines.on('close', () => resolve(data));
+    lines.on('close', () => resolve({ data, meta }));
   })
 }
 

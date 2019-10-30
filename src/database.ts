@@ -19,18 +19,19 @@ import { base36 } from './id';
 // previous point in it's history.
 export async function database(dirpath): Promise<Database> {
   const fm = fileManager(dirpath)
-  const data = await fm.rebuild();
-  if (data instanceof Error) throw data;
+  const db = await fm.rebuild();
+  if (db instanceof Error) throw db;
+  const { data, meta } = db;
 
   return {
     read: (table:string) => readOnly(data[table]),
-    id: id => makeIdGetter(data)(id),
-    graph: id => makeGraphGetter(data)(id),
+    id: id => makeIdGetter(db)(id),
+    graph: id => makeGraphGetter(db)(id),
     define,
-    create: (table:string, options:{ fields:Record }) => makeCreator(data)(table, options),
+    create: (table:string, options:{ fields:Record }) => makeCreator(db)(table, options),
     update,
     destroy,
-    commit: makeCommiter(fm, data),
+    commit: makeCommiter(fm, db),
   }
 }
 
@@ -55,11 +56,11 @@ function referenceTable(name:string): string {
   return name.slice(0, -2);
 }
 
-function makeGraphGetter(data:ReadOnlyDatabase) {
+function makeGraphGetter(db:ReadOnlyDatabase) {
   return function(id:string) {
-    const { record, table } = makeIdGetter(data)(id);
+    const { record, table } = makeIdGetter(db)(id);
     const graph:any = { ...record };
-    for (const [foreignTable, records] of Object.entries(data)) {
+    for (const [foreignTable, records] of Object.entries(db.data)) {
       for (const foreignRecord of Object.values(records)) {
         for (const foreignField of Object.keys(foreignRecord)) {
           if (foreignField == table + 'Id') {
@@ -75,9 +76,9 @@ function makeGraphGetter(data:ReadOnlyDatabase) {
 }
 
 // Get a record by id from any table it may be in
-function makeIdGetter(data:ReadOnlyDatabase) {
+function makeIdGetter(db:ReadOnlyDatabase) {
   return function (id:string): idLookup|undefined {
-    for (const [table, records] of Object.entries(data)) {
+    for (const [table, records] of Object.entries(db.data)) {
       if (records[id]) return { record: records[id], table };
     }
   }
@@ -89,11 +90,11 @@ function define(table:string, options: { referenceField: string }): CommitMateri
 }
 
 // Guarantee that no id collisions occur
-function idGenerator(data:ReadOnlyDatabase) {
+function idGenerator(db:ReadOnlyDatabase) {
   return function() {
     let id = base36();
-    for (const records of Object.values(data)) {
-      if (records[id]) return idGenerator(data)();
+    for (const records of Object.values(db.data)) {
+      if (records[id]) return idGenerator(db)();
     }
     return id;
   }
@@ -133,7 +134,7 @@ function destroy(table:string, payload:DestructionPayload): CommitMaterial {
 }
 
 // Create a function that can use CommitMaterial to persist mutations to file
-function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
+function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
   return async function(...cms:CommitMaterial[]): Promise<Error|Table> {
     const affectedRecords = {};
 
@@ -144,22 +145,22 @@ function makeCommiter(fm:FileManager, data:ReadOnlyDatabase) {
     // Apply mutations to memory
     cms.forEach(async cm => {
       if (cm.mutation == 'define') {
-        data[cm.table] = {};
+        db.data[cm.table] = {};
       }
       else if (cm.mutation == 'create') {
         const { id, fields } = cm.payload;
-        data[cm.table][id] = fields;
+        db.data[cm.table][id] = fields;
         affectedRecords[id] = fields;
       }
       else if (cm.mutation == 'update') {
         const { id, fields: newFields } = cm.payload;
-        const { ...oldFields } = data[cm.table][id];
+        const { ...oldFields } = db.data[cm.table][id];
         const updated = { ...oldFields, ...newFields };
-        data[cm.table][id] = updated;
+        db.data[cm.table][id] = updated;
         affectedRecords[id] = updated;
       }
       else if (cm.mutation == 'destroy') {
-        delete data[cm.table][cm.payload.id]
+        delete db.data[cm.table][cm.payload.id]
       }
     })
     return affectedRecords;

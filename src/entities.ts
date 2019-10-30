@@ -44,7 +44,8 @@ export interface Table {
 
 // This may never be seen by a module user?
 export interface ReadOnlyDatabase {
-  [table:string]: Table
+  data: { [table:string]: Table }
+  meta: { [key:string]: any }
 }
 
 // Module that handles persistence details
