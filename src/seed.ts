@@ -110,10 +110,13 @@ import { database } from './database';
     }),
   );
 
-  const actorGraph = data.graph(actorIds[0]);
-  
-  const actors = data.read('actors');
-  const positions = data.read('positions');
-  const transactions = data.read('transactions');
-  console.log(actorGraph);
+  const [id] = actorIds;
+  const results:any = data.read('actors')[id];
+  const [positionIds, positions] = Object.entries(data.read('positions'));
+  const [transactionIds, transactions] = Object.entries(data.read('transactions'));
+
+  results.positions = positions.filter(p => p['actorId'] == id);
+  results.transactions = transactions.filter(t => t['actorId'] == id);
+
+  console.log(results);
 })()
