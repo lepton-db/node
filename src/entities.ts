@@ -54,11 +54,21 @@ export interface FileManager {
   rebuild: () => Promise<Error|ReadOnlyDatabase>
 }
 
+export interface FindOptions {
+  [table:string]: {
+    where?: (id:string, record:Record) => boolean,
+    limit?: number
+  }
+}
+
+
+
 // The interface that users of the module will interact with
 export interface Database {
   read: (table:string) => Table
   id: (id:string) => idLookup|undefined
   graph?: any // experimental
+  find: (FindOptions) => { [table:string]: Table }
   define: (table:string, { referenceField:string }) => CommitMaterial
   create: (table:string, { fields:Record }) => CommitMaterial
   update: (table:string, { id:string, fields:Record }) => CommitMaterial

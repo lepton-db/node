@@ -9,6 +9,7 @@ import {
   DestructionPayload,
   UpdatePayload,
   CreationPayload,
+  FindOptions,
 } from './entities';
 import { fileManager } from './file-manager';
 import { base36 } from './id';
@@ -24,10 +25,11 @@ export async function database(dirpath): Promise<Database> {
 
   return {
     read: (table:string) => readOnly(db.data[table]),
-    id: id => makeIdGetter(db)(id),
-    graph: id => makeGraphGetter(db)(id),
+    id: makeIdGetter(db),
+    graph: makeGraphGetter(db),
+    find: makeFind(db),
     define,
-    create: (table:string, options:{ fields:Record }) => makeCreator(db)(table, options),
+    create: makeCreator(db),
     update,
     destroy,
     commit: makeCommiter(fm, db),
@@ -44,7 +46,6 @@ function readOnly(table) {
   }
   return copy;
 }
-
 
 // Create an object that represents a record and all its relationships
 function makeGraphGetter(db:ReadOnlyDatabase) {
@@ -77,6 +78,25 @@ function makeIdGetter(db:ReadOnlyDatabase) {
     for (const [table, records] of Object.entries(db.data)) {
       if (records[id]) return { record: records[id], table };
     }
+  }
+}
+
+function makeFind(db:ReadOnlyDatabase) {
+  return function join(findOptions:FindOptions): { [table:string]: Table } {
+    const results = {};
+    for (const [table, options] of Object.entries(findOptions)) {
+      const { where, limit } = options;
+
+      const targetTable = db.data[table];
+      if (!targetTable) continue;
+
+      results[table] = [];
+      for (const [id, record] of Object.entries(targetTable)) {
+        if (limit && results[table].length >= limit) break;
+        if (!where || where(id, record)) results[table].push(record);
+      }
+    }
+    return results;
   }
 }
 

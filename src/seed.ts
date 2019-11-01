@@ -110,13 +110,19 @@ import { database } from './database';
     }),
   );
 
-  const [id] = actorIds;
-  const results:any = data.read('actors')[id];
-  const [positionIds, positions] = Object.entries(data.read('positions'));
-  const [transactionIds, transactions] = Object.entries(data.read('transactions'));
+  const results = data.find({
+    actors: {
+      where: (id, actor) => id == actorIds[0],
+      limit: 1,
+    },
+    positions: {
+      where: (id, position) => position.actorId == actorIds[0],
+      limit: 1,
+    },
+    transactions: {
+      where: (id, transaction) => transaction.actorId == actorIds[0],
+      limit: 1,
+    },
+  })
 
-  results.positions = positions.filter(p => p['actorId'] == id);
-  results.transactions = transactions.filter(t => t['actorId'] == id);
-
-  console.log(results);
-})()
+console.log(results); })() 
