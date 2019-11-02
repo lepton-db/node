@@ -16,7 +16,18 @@ async function databaseCreationTest() {
     data.define('positions', {
       referenceField: 'positionId'
     }),
-  )
+  );
+
+  // Expect newly created tables to exist, and be empty
+  ['actors', 'transactions', 'positions'].forEach(table => {
+    const records = data.read(table);
+    if (!records || records.length) {
+      throw new Error(
+        `Expected ${table} to be an empty object.
+        Found ${JSON.stringify(records)} instead.`
+      );
+    }
+  });
 
   // Populate actor
   const newActors = await data.commit(
