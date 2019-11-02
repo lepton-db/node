@@ -48,9 +48,20 @@ async function databaseCreationTest() {
     }),
   );
 
+  // Expect exactly three actor records to exist
   const actorIds = Object.keys(newActors);
   if (actorIds.length != 3) {
-    throw new Error('Expected actors to be created')
+    throw new Error(`
+      Expected 3 records to be affected by creating new actor records.
+      Instead found ${actorIds.length}
+    `);
+  }
+
+  if (newActors[actorIds[0]].cash !== 6500.54) {
+    throw new Error(`
+      Expected the first actor's cash property to be 6500.54.
+      Instead found ${newActors[actorIds[0]].cash}
+    `);
   }
 
   // Populate transaction
