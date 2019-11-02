@@ -1,7 +1,10 @@
 import { database } from './database';
+import * as fs from 'fs';
 
-(async () => {
+async function databaseCreationTest() {
   const data = await database(__dirname + '/data');
+  if (!data) throw new Error('Expected database client to exist');
+
   // Define Tables
   await data.commit(
     data.define('actors', {
@@ -14,8 +17,9 @@ import { database } from './database';
       referenceField: 'positionId'
     }),
   )
+
   // Populate actor
-  const createdactor = await data.commit(
+  const newActors = await data.commit(
     data.create('actors', {
       fields: {
         cash: 6500.54
@@ -32,7 +36,11 @@ import { database } from './database';
       }
     }),
   );
-  const actorIds = Object.keys(createdactor);
+
+  const actorIds = Object.keys(newActors);
+  if (actorIds.length != 3) {
+    throw new Error('Expected actors to be created')
+  }
 
   // Populate transaction
   const createdtransaction = await data.commit(
@@ -67,7 +75,6 @@ import { database } from './database';
       }
     }),
   );
-
 
   // Populate position
   await data.commit(
@@ -124,5 +131,8 @@ import { database } from './database';
       limit: 1,
     },
   })
+}
 
-console.log(results); })() 
+module.exports.tests = [
+  databaseCreationTest,
+]
