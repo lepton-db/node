@@ -148,12 +148,37 @@ async function databaseCreationTest() {
       }
     }),
   );
+
+  if (newActors[actorIds[0]].cash !== 6500.54) {
+    throw new Error(`
+      Expected an actor's cash property to be unchanged at 6500.54 after
+      updating without re-reading. Instead found ${newActors[actorIds[0]].cash}
+    `);
+  }
+
+  const updatedActor = data.read('actors')[actorIds[0]];
+  if (updatedActor.cash !== 3000) {
+    throw new Error(`
+      Expected an actor's cash property to have changed to 3000 after
+      updating and re-reading. Instead found ${updatedActor.cash}
+    `);
+  }
+
   // Delete Actor
   await data.commit(
     data.destroy('actors', {
       id: actorIds[2],
     }),
   );
+
+  // Expect exactly two actor records to exist after deletion
+  const actorsAfterDeletion = Object.keys(data.read('actors'));
+  if (actorsAfterDeletion.length != 2) {
+    throw new Error(`
+      Expected 2 actor records to exist after deleting 1.
+      Instead found ${actorIds.length}
+    `);
+  }
 
   const results = data.find({
     actors: {
