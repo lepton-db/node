@@ -65,7 +65,7 @@ async function databaseCreationTest() {
   }
 
   // Populate transaction
-  const createdtransaction = await data.commit(
+  const newTransactions = await data.commit(
     data.create('transactions', {
       fields: {
         actorId: actorIds[0],
@@ -97,6 +97,22 @@ async function databaseCreationTest() {
       }
     }),
   );
+
+  // Expect exactly three actor records to exist
+  const transactionIds = Object.keys(newTransactions);
+  if (transactionIds.length != 3) {
+    throw new Error(`
+      Expected 3 records to be affected by creating new transaction records.
+      Instead found ${transactionIds.length}
+    `);
+  }
+
+  if (newTransactions[transactionIds[0]].symbol !== "AAPL") {
+    throw new Error(`
+      Expected the first transaction's symbol property to be "AAPL".
+      Instead found ${newTransactions[transactionIds[0]].symbol}
+    `);
+  }
 
   // Populate position
   await data.commit(
