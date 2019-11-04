@@ -193,7 +193,17 @@ async function databaseCreationTest() {
       where: (id, transaction) => transaction.actorId == actorIds[0],
       limit: 1,
     },
-  })
+  });
+
+  // data.find() should return an object, and each value should be an Array
+  Object.values(results).forEach(records => {
+    if (!Array.isArray(records)) {
+      throw new Error(`
+        Expected the results of data.find() to be an object with Arrays
+        as values. Instead found ${JSON.stringify(records)}
+      `);
+    }
+  });
 }
 
 module.exports.tests = [
