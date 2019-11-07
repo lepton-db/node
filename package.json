@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/craigfay/lepton.git"
+    "url": "git+https://github.com/craigfay/lepton.db.git"
   },
   "author": "",
   "license": "ISC",
