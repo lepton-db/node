@@ -2,4 +2,4 @@ node_modules
 data
 demo.ts
 .DS_Store
-# dist
+dist
