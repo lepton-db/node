@@ -38,9 +38,9 @@ export async function database(dirpath): Promise<Database> {
 
 // Return a copy of a table for reading.
 // Mutating it will not affect the original.
-function readOnly(table) {
+function readOnly(table:Table) {
   if (!table) return table;
-  const copy = {}
+  const copy:Table = {}
   for (const [id, fields] of Object.entries(table)) {
     copy[id] = { ...fields }
   }
