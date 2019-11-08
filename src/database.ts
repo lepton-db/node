@@ -122,6 +122,7 @@ function idGenerator(db:ReadOnlyDatabase) {
 function makeCreator(data:ReadOnlyDatabase) {
   return function create(table:string, payload:CreationPayload): CommitMaterial {
     const { fields } = payload;
+    if (!fields) throw new Error('payload must have a "fields" property');
     const id = idGenerator(data)();
     return {
       table,
@@ -133,6 +134,8 @@ function makeCreator(data:ReadOnlyDatabase) {
 
 // Create CommitMaterial that can be used to update existing records
 function update(table:string, payload:UpdatePayload): CommitMaterial {
+  if (!payload.id) throw new Error('payload must have an "id" property');
+  if (!payload.fields) throw new Error('payload must have a "fields" property');
   return {
     table,
     mutation: 'update',
@@ -142,6 +145,7 @@ function update(table:string, payload:UpdatePayload): CommitMaterial {
 
 // Create CommitMaterial that can be used to delete existing records
 function destroy(table:string, payload:DestructionPayload): CommitMaterial {
+  if (!payload.id) throw new Error('payload must have an "id" property');
   return {
     table,
     mutation: 'destroy',
