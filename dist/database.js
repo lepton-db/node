@@ -183,6 +183,8 @@ function idGenerator(db) {
 function makeCreator(data) {
     return function create(table, payload) {
         var fields = payload.fields;
+        if (!fields)
+            throw new Error('payload must have a "fields" property');
         var id = idGenerator(data)();
         return {
             table: table,
@@ -193,6 +195,10 @@ function makeCreator(data) {
 }
 // Create CommitMaterial that can be used to update existing records
 function update(table, payload) {
+    if (!payload.id)
+        throw new Error('payload must have an "id" property');
+    if (!payload.fields)
+        throw new Error('payload must have a "fields" property');
     return {
         table: table,
         mutation: 'update',
@@ -201,6 +207,8 @@ function update(table, payload) {
 }
 // Create CommitMaterial that can be used to delete existing records
 function destroy(table, payload) {
+    if (!payload.id)
+        throw new Error('payload must have an "id" property');
     return {
         table: table,
         mutation: 'destroy',
