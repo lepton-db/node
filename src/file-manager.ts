@@ -13,7 +13,7 @@ import {
 export function fileManager(dirpath) {
   return {
     commit: makeCommiter(dirpath),
-    rebuild: makeRebuilder(dirpath),
+    rebuild: makeSyncRebuilder(dirpath),
   }
 }
 
@@ -76,6 +76,40 @@ const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
     lines.on('error', e => reject(rebuildError(datafile)))
     lines.on('close', () => resolve({ data, meta }));
   })
+}
+
+const makeSyncRebuilder = dirpath => (): Error|ReadOnlyDatabase => {
+  const datafile = path.join(dirpath, '.commits');
+  const data = {};
+  const meta = {};
+
+  // Configure Input Stream
+  const input = withoutThrowing(fs.createReadStream, datafile)
+  if (input instanceof Error) return rebuildError(datafile);
+  const lines = rl.createInterface({ input });
+
+  for (const line of lines) {
+    const commit = JSON.parse(line);
+
+    if (commit.mutation == 'define') {
+      data[commit.table] = {};
+      meta[commit.table] = {};
+      meta[commit.table].referenceField = commit.payload.referenceField;
+    }
+    if (commit.mutation == 'create') {
+      const { id, fields } = commit.payload;
+      data[commit.table][id] = fields;
+    }
+    if (commit.mutation == 'update') {
+      const { id, fields: newFields } = commit.payload;
+      const { ...oldFields } = data[commit.table][id];
+      data[commit.table][id] = { ...oldFields, ...newFields };
+    }
+    if (commit.mutation == 'destroy') {
+      delete data[commit.table][commit.payload.id]
+    }
+  }
+  return { data, meta };
 }
 
 function rebuildError(datafile:string) {
