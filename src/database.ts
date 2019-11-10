@@ -4,7 +4,6 @@ import {
   Database,
   ReadOnlyDatabase,
   Table,
-  Record,
   idLookup,
   DestructionPayload,
   UpdatePayload,
@@ -18,7 +17,7 @@ import { base36 } from './id';
 // All other reads are from memory, and mutations are relatively fast.
 // Being git-like means that the database can potentially be restored to any
 // previous point in it's history.
-export function database(dirpath): Promise<Database> {
+export function database(dirpath): Database {
   const fm = fileManager(dirpath)
   const db = fm.rebuild();
   if (db instanceof Error) throw db;

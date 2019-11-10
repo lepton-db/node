@@ -51,7 +51,7 @@ export interface ReadOnlyDatabase {
 // Module that handles persistence details
 export interface FileManager {
   commit: (...cms:CommitMaterial[]) => Promise<Error|undefined>
-  rebuild: () => Promise<Error|ReadOnlyDatabase>
+  rebuild: () => Error|ReadOnlyDatabase
 }
 
 export interface FindOptions {
