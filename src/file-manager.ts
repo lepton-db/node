@@ -11,6 +11,9 @@ import {
 } from './entities';
 
 export function fileManager(dirpath) {
+  const datafile = path.join(dirpath, '.commits');
+  if (!fs.existsSync(datafile)) fs.writeFileSync(datafile, '');
+
   return {
     commit: makeCommiter(dirpath),
     rebuild: makeSyncRebuilder(dirpath),
