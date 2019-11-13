@@ -12,17 +12,16 @@ import {
 
 export function fileManager(dirpath) {
   const datafile = path.join(dirpath, '.commits');
-  if (!fs.existsSync(datafile)) fs.writeFileSync(datafile, '');
+  if (!fs.existsSync(datafile)) fs.writeFileSync(datafile);
 
   return {
-    commit: makeCommiter(dirpath),
-    rebuild: makeSyncRebuilder(dirpath),
+    commit: makeCommiter(datafile),
+    rebuild: makeSyncRebuilder(datafile),
   }
 }
 
-function makeCommiter(dirpath) {
+function makeCommiter(datafile) {
   return async function(...cms:CommitMaterial[]): Promise<Error|undefined> {
-    const datafile = path.join(dirpath, '.commits');
 
     // A string containing multiple lines of commits
     const lines = cms.map(cm => {
@@ -41,8 +40,7 @@ function makeCommiter(dirpath) {
   }
 }
 
-const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
-  const datafile = path.join(dirpath, '.commits');
+const makeRebuilder = datafile => async (): Promise<Error|ReadOnlyDatabase> => {
   const data = {};
   const meta = {};
   
@@ -81,8 +79,7 @@ const makeRebuilder = dirpath => async (): Promise<Error|ReadOnlyDatabase> => {
   })
 }
 
-const makeSyncRebuilder = dirpath => (): Error|ReadOnlyDatabase => {
-  const datafile = path.join(dirpath, '.commits');
+const makeSyncRebuilder = datafile => (): Error|ReadOnlyDatabase => {
   const data = {};
   const meta = {};
 
