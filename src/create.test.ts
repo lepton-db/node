@@ -1,6 +1,4 @@
 import { database } from './database';
-import * as fs from 'fs';
-import { strict } from 'assert';
 
 async function databaseCreationTest() {
   const data = await database(__dirname + '/data');
