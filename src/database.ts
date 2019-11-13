@@ -157,10 +157,6 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
   return async function(...cms:CommitMaterial[]): Promise<Error|Table> {
     const affectedRecords = {};
 
-    // Apply mutations to file
-    const write = await fm.commit(...cms);
-    if (write instanceof Error) return write;
-    
     // Apply mutations to memory
     cms.forEach(async cm => {
       if (cm.mutation == 'define') {
@@ -184,6 +180,10 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
         delete db.data[cm.table][cm.payload.id]
       }
     })
+    // Apply mutations to file
+    const write = await fm.commit(...cms);
+    if (write instanceof Error) return write;
+
     return affectedRecords;
   }
 }
