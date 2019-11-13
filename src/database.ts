@@ -157,6 +157,13 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
   return async function(...cms:CommitMaterial[]): Promise<Error|Table> {
     const affectedRecords = {};
 
+    // Don't allow mutations to tables that don't exist
+    cms.forEach(cm => {
+      if (cm.mutation !== 'define' && !db.data[cm.table]) {
+        throw new Error(`The target table "${cm.table}" does not exist`);
+      }
+    })
+
     // Apply mutations to memory
     cms.forEach(cm => {
       if (cm.mutation == 'define') {
