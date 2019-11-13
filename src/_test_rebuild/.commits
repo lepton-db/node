@@ -1,3 +1,0 @@
-{"id":"ouxon0l7sfsy90k4","timestamp":"2019-11-13T07:05:31.115Z","table":"actors","mutation":"define","payload":{"referenceField":"actorId"}}
-{"id":"ertymjhxeew4r0nf","timestamp":"2019-11-13T07:05:31.115Z","table":"transactions","mutation":"define","payload":{"referenceField":"transactionId"}}
-{"id":"i21n8pok7mapcnw2","timestamp":"2019-11-13T07:05:31.115Z","table":"positions","mutation":"define","payload":{"referenceField":"positionId"}}
