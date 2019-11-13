@@ -215,6 +215,12 @@ async function databaseCreationTest() {
       `);
     }
   });
+
+  // Expect rebuilds to have the correct tables
+  const dataRebuild = await database(__dirname + '/data');
+  if (!dataRebuild.read('actors')) {
+    throw new Error('Expected actors table to exist after rebuild');
+  }
 }
 
 module.exports.tests = [

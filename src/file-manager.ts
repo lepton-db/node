@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 const rl = require('readline');
+const LineReader = require('n-readlines');
 const { base36 } = require('./id');
 const appendFile = util.promisify(fs.appendFile);
 import {
@@ -12,7 +13,7 @@ import {
 
 export function fileManager(dirpath) {
   const datafile = path.join(dirpath, '.commits');
-  if (!fs.existsSync(datafile)) fs.writeFileSync(datafile);
+  if (!fs.existsSync(datafile)) fs.writeFileSync(datafile, '');
 
   return {
     commit: makeCommiter(datafile),
@@ -80,15 +81,16 @@ const makeRebuilder = datafile => async (): Promise<Error|ReadOnlyDatabase> => {
 }
 
 const makeSyncRebuilder = datafile => (): Error|ReadOnlyDatabase => {
+  // Return values
   const data = {};
   const meta = {};
 
-  // Configure Input Stream
-  const input = withoutThrowing(fs.createReadStream, datafile)
-  if (input instanceof Error) return rebuildError(datafile);
-  const lines = rl.createInterface({ input });
+  const lines = new LineReader(datafile);
 
-  for (const line of lines) {
+  // Re-apply each mutation in the commit history
+  while (true) {
+    let line = lines.next();
+    if (!line) break;
     const commit = JSON.parse(line);
 
     if (commit.mutation == 'define') {
