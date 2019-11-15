@@ -73,5 +73,5 @@ export interface Database {
   create: (table:string, { fields:Record }) => CommitMaterial
   update: (table:string, { id:string, fields:Record }) => CommitMaterial
   destroy: (table:string, { id:string }) => CommitMaterial
-  commit: (...cms:CommitMaterial[]) => Promise<Error|Table>
+  commit: (...cms:CommitMaterial[]) => Promise<[Table, Error[]]>
 }

@@ -154,8 +154,9 @@ function destroy(table:string, payload:DestructionPayload): CommitMaterial {
 
 // Create a function that can use CommitMaterial to persist mutations to file
 function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
-  return async function(...cms:CommitMaterial[]): Promise<Error|Table> {
+  return async function(...cms:CommitMaterial[]): Promise<[Table, Error[]]> {
     const affectedRecords = {};
+    const errors = [];
 
     // Don't allow mutations to tables that don't exist
     cms.forEach(cm => {
@@ -164,8 +165,8 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
       }
     })
 
-    // Apply mutations to memory
-    cms.forEach(cm => {
+    cms.forEach(async cm => {
+      // Apply mutations to memory
       if (cm.mutation == 'define') {
         db.data[cm.table] = {};
         db.meta[cm.table] = {};
@@ -186,11 +187,12 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
       else if (cm.mutation == 'destroy') {
         delete db.data[cm.table][cm.payload.id]
       }
+      // Apply mutations to file
+      const write = await fm.commit(cm);
+      if (write instanceof Error) errors.push(write);
     })
 
-    // Apply mutations to file
-    const write = await fm.commit(...cms);
-    if (write instanceof Error) return write;
-    return affectedRecords;
+    return [affectedRecords, errors];
+
   }
 }

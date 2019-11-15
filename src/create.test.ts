@@ -30,7 +30,7 @@ async function databaseCreationTest() {
 
   // Try to mutate a table that doesn't exist
   try {
-    const nonExistentTableMutation = await data.commit(
+    const [nonExistentTableMutation, errors] = await data.commit(
       data.create('widgets', {
         fields: { sprockets: 65 }
       })
@@ -41,7 +41,7 @@ async function databaseCreationTest() {
   }
 
   // Populate actor
-  const newActors = await data.commit(
+  const [newActors, newActorErrors] = await data.commit(
     data.create('actors', {
       fields: {
         cash: 6500.54
@@ -76,7 +76,7 @@ async function databaseCreationTest() {
   }
 
   // Populate transaction
-  const newTransactions = await data.commit(
+  const [newTransactions, newTransactionErrors] = await data.commit(
     data.create('transactions', {
       fields: {
         actorId: actorIds[0],
