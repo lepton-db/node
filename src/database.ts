@@ -185,14 +185,21 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
         affectedRecords[id] = updated;
       }
       else if (cm.mutation == 'destroy') {
-        delete db.data[cm.table][cm.payload.id]
+        const record = db.data[cm.table][cm.payload.id];
+        if (record) {
+          delete db.data[cm.table][cm.payload.id]
+          affectedRecords[cm.payload.id] = record;
+        } else {
+          errors.push(new Error(
+            `Could not delete record ${cm.payload.id} from table ${cm.table}, `
+            +  `because it does not exist.`
+          ));
+        }
       }
       // Apply mutations to file
       const write = await fm.commit(cm);
       if (write instanceof Error) errors.push(write);
     })
-
     return [affectedRecords, errors];
-
   }
 }
