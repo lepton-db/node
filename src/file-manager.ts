@@ -64,7 +64,7 @@ const makeRebuilder = datafile => async (): Promise<Error|ReadOnlyDatabase> => {
         const { id, fields } = commit.payload;
         data[commit.table][id] = fields;
       }
-      if (commit.mutation == 'update') {
+      if (commit.mutation == 'alter') {
         const { id, fields: newFields } = commit.payload;
         const { ...oldFields } = data[commit.table][id];
         data[commit.table][id] = { ...oldFields, ...newFields };
@@ -102,7 +102,7 @@ const makeSyncRebuilder = datafile => (): Error|ReadOnlyDatabase => {
       const { id, fields } = commit.payload;
       data[commit.table][id] = fields;
     }
-    if (commit.mutation == 'update') {
+    if (commit.mutation == 'alter') {
       const { id, fields: newFields } = commit.payload;
       const { ...oldFields } = data[commit.table][id];
       data[commit.table][id] = { ...oldFields, ...newFields };

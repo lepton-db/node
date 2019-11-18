@@ -1,7 +1,7 @@
 import { database } from './database';
 
 async function databaseCreationTest() {
-  const data = await database(__dirname + '/data');
+  const data = database(__dirname + '/data');
   if (!data) throw new Error('Expected database client to exist');
 
   // Define Tables
@@ -152,7 +152,7 @@ async function databaseCreationTest() {
 
   // Update Actor
   await data.commit(
-    data.update('actors', {
+    data.alter('actors', {
       id: actorIds[0],
       fields: {
         "cash": 3000,
@@ -217,7 +217,7 @@ async function databaseCreationTest() {
   });
 
   // Expect rebuilds to have the correct tables
-  const dataRebuild = await database(__dirname + '/data');
+  const dataRebuild = database(__dirname + '/data');
   if (!dataRebuild.read('actors')) {
     throw new Error('Expected actors table to exist after rebuild');
   }

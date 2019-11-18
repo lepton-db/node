@@ -8,7 +8,7 @@ export interface Commit {
 
 export interface CommitMaterial {
   table: string
-  mutation: 'define' | 'create' | 'update' | 'destroy'
+  mutation: 'define' | 'create' | 'alter' | 'destroy'
   payload?: any
 }
 
@@ -20,7 +20,7 @@ export interface CreationPayload {
   fields: Record
 }
 
-export interface UpdatePayload {
+export interface AlterationPayload {
   id: string
   fields: Record
 }
@@ -71,7 +71,7 @@ export interface Database {
   find: (FindOptions) => { [table:string]: Table }
   define: (table:string, { referenceField:string }) => CommitMaterial
   create: (table:string, { fields:Record }) => CommitMaterial
-  update: (table:string, { id:string, fields:Record }) => CommitMaterial
+  alter: (table:string, { id:string, fields:Record }) => CommitMaterial
   destroy: (table:string, { id:string }) => CommitMaterial
   commit: (...cms:CommitMaterial[]) => Promise<[Table, Error[]]>
 }

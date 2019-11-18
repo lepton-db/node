@@ -6,7 +6,7 @@ import {
   Table,
   idLookup,
   DestructionPayload,
-  UpdatePayload,
+  AlterationPayload,
   CreationPayload,
   FindOptions,
 } from './entities';
@@ -29,7 +29,7 @@ export function database(dirpath): Database {
     find: makeFind(db),
     define,
     create: makeCreator(db),
-    update,
+    alter,
     destroy,
     commit: makeCommiter(fm, db),
   }
@@ -132,12 +132,12 @@ function makeCreator(data:ReadOnlyDatabase) {
 }
 
 // Create CommitMaterial that can be used to update existing records
-function update(table:string, payload:UpdatePayload): CommitMaterial {
+function alter(table:string, payload:AlterationPayload): CommitMaterial {
   if (!payload.id) throw new Error('payload must have an "id" property');
   if (!payload.fields) throw new Error('payload must have a "fields" property');
   return {
     table,
-    mutation: 'update',
+    mutation: 'alter',
     payload,
   }
 }
@@ -165,7 +165,7 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
       }
     })
 
-    cms.forEach(async cm => {
+    for (const cm of cms) {
       // Apply mutations to memory
       if (cm.mutation == 'define') {
         db.data[cm.table] = {};
@@ -177,12 +177,12 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
         db.data[cm.table][id] = fields;
         affectedRecords[id] = fields;
       }
-      else if (cm.mutation == 'update') {
+      else if (cm.mutation == 'alter') {
         const { id, fields: newFields } = cm.payload;
         const { ...oldFields } = db.data[cm.table][id];
-        const updated = { ...oldFields, ...newFields };
-        db.data[cm.table][id] = updated;
-        affectedRecords[id] = updated;
+        const altered = { ...oldFields, ...newFields };
+        db.data[cm.table][id] = altered;
+        affectedRecords[id] = altered;
       }
       else if (cm.mutation == 'destroy') {
         const record = db.data[cm.table][cm.payload.id];
@@ -199,7 +199,7 @@ function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
       // Apply mutations to file
       const write = await fm.commit(cm);
       if (write instanceof Error) errors.push(write);
-    })
+    }
     return [affectedRecords, errors];
   }
 }
