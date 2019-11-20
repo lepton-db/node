@@ -21,17 +21,19 @@ export function database(dirpath): Database {
   const fm = fileManager(dirpath)
   const db = fm.rebuild();
   if (db instanceof Error) throw db;
+  
+  // A method that can use commit material to apply persistence changes
+  const commit = makeCommiter(fm, db);
 
   return {
     read: (table:string) => readOnly(db.data[table]),
     id: makeIdGetter(db),
     graph: makeGraphGetter(db),
     find: makeFind(db),
-    define,
-    create: makeCreator(db),
-    alter,
-    destroy,
-    commit: makeCommiter(fm, db),
+    define: makeDefiner(commit),
+    create: makeCreator(db, commit),
+    alter: makeAlterer(commit),
+    destroy: makeDestroyer(commit),
   }
 }
 
@@ -99,9 +101,12 @@ function makeFind(db:ReadOnlyDatabase) {
   }
 }
 
-// Create CommitMaterial that can be used to define new tables
-function define(table:string, options: { referenceField: string }): CommitMaterial {
-  return { table, mutation: 'define', payload: options };
+function makeDefiner(commit) {
+  // Create CommitMaterial that can be used to define new tables
+  return async function define(table:string, options: { referenceField: string }) {
+    const cm: CommitMaterial = { table, mutation: 'define', payload: options };
+    return await commit(cm)
+  }
 }
 
 // Guarantee that no id collisions occur
@@ -118,37 +123,44 @@ function idGenerator(db:ReadOnlyDatabase) {
 // Given a database, create a function that can be used to generate
 // CommitMaterial with a mutation value of "create".
 // Ultimately, this will be used to create new records with no id collisions
-function makeCreator(data:ReadOnlyDatabase) {
-  return function create(table:string, payload:CreationPayload): CommitMaterial {
+function makeCreator(data:ReadOnlyDatabase, commit) {
+  return async function create(table:string, payload:CreationPayload) {
     const { fields } = payload;
     if (!fields) throw new Error('payload must have a "fields" property');
     const id = idGenerator(data)();
-    return {
+    const cm: CommitMaterial = {
       table,
       mutation: 'create',
       payload: { id, fields},
     }
+    return await commit(cm);
   }
 }
 
-// Create CommitMaterial that can be used to update existing records
-function alter(table:string, payload:AlterationPayload): CommitMaterial {
-  if (!payload.id) throw new Error('payload must have an "id" property');
-  if (!payload.fields) throw new Error('payload must have a "fields" property');
-  return {
-    table,
-    mutation: 'alter',
-    payload,
+function makeAlterer(commit) {
+  // Create CommitMaterial that can be used to update existing records
+  return async function alter(table:string, payload:AlterationPayload) {
+    if (!payload.id) throw new Error('payload must have an "id" property');
+    if (!payload.fields) throw new Error('payload must have a "fields" property');
+    const cm: CommitMaterial = {
+      table,
+      mutation: 'alter',
+      payload,
+    }
+    return commit(cm);
   }
 }
 
-// Create CommitMaterial that can be used to delete existing records
-function destroy(table:string, payload:DestructionPayload): CommitMaterial {
-  if (!payload.id) throw new Error('payload must have an "id" property');
-  return {
-    table,
-    mutation: 'destroy',
-    payload,
+function makeDestroyer(commit) {
+  // Create CommitMaterial that can be used to delete existing records
+  return async function destroy(table:string, payload:DestructionPayload) {
+    if (!payload.id) throw new Error('payload must have an "id" property');
+    const cm: CommitMaterial = {
+      table,
+      mutation: 'destroy',
+      payload,
+    }
+    return commit(cm);
   }
 }
 

@@ -61,17 +61,14 @@ export interface FindOptions {
   }
 }
 
-
-
 // The interface that users of the module will interact with
 export interface Database {
   read: (table:string) => Table
   id: (id:string) => idLookup|undefined
   graph?: any // experimental
   find: (FindOptions) => { [table:string]: Table }
-  define: (table:string, { referenceField:string }) => CommitMaterial
-  create: (table:string, { fields:Record }) => CommitMaterial
-  alter: (table:string, { id:string, fields:Record }) => CommitMaterial
-  destroy: (table:string, { id:string }) => CommitMaterial
-  commit: (...cms:CommitMaterial[]) => Promise<[Table, Error[]]>
+  define: (table:string, { referenceField:string }) => Promise<[Table, Error[]]>
+  create: (table:string, { fields:Record }) => Promise<[Table, Error[]]>
+  alter: (table:string, { id:string, fields:Record }) => Promise<[Table, Error[]]>
+  destroy: (table:string, { id:string }) => Promise<[Table, Error[]]>
 }
