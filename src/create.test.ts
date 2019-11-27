@@ -38,56 +38,56 @@ async function databaseCreationTest() {
   }
 
   // Populate actor
-  const [actor1Effects, actor1Errors] = await data.create(
+  const [actor1Effects, actor1Error] = await data.create(
     'actors', {
     fields: {
       cash: 6500.54
     }
   });
-  const [actor2Effects, actor2Errors] = await data.create(
+  const [actor2Effects, actor2Error] = await data.create(
     'actors', {
     fields: {
       cash: 1000
     }
   });
-  const [actor3Effects, actor3Errors] = await data.create(
+  const [actor3Effects, actor3Error] = await data.create(
     'actors', {
     fields: {
       cash: 2400.78
     }
   });
 
-  if (actor1Errors.length) {
+  if (actor1Error) {
     throw new Error(`
       Expected actor creation to produce no errors.
-      Instead found ${actor1Errors}
+      Instead found ${actor1Error}
     `);
   }
-  if (actor2Errors.length) {
+  if (actor2Error) {
     throw new Error(`
       Expected actor creation to produce no errors.
-      Instead found ${actor2Errors}
+      Instead found ${actor2Error}
     `);
   }
-  if (actor3Errors.length) {
+  if (actor3Error) {
     throw new Error(`
       Expected actor creation to produce no errors.
-      Instead found ${actor3Errors}
+      Instead found ${actor3Error}
     `);
   }
 
-  if (Object.values(actor1Effects)[0].cash !== 6500.54) {
+  if (actor1Effects.cash !== 6500.54) {
     throw new Error(`
       Expected the first actor's cash property to be 6500.54.
-      Instead found ${Object.values(actor1Effects)[0].cash}
+      Instead found ${actor1Effects.cash}
     `);
   }
 
   // Populate transaction
-  const [transaction1Effects, transaction1Errors] = await data.create(
+  const [transaction1Effects, transaction1Error] = await data.create(
     'transactions', {
     fields: {
-      actorId: Object.keys(actor1Effects)[0],
+      actorId: actor1Effects.id,
       timestamp: "2019-10-26T15:42:37.667Z",
       action: "buy",
       symbol: "AAPL",
@@ -95,10 +95,10 @@ async function databaseCreationTest() {
       price: 246.58
     }
   });
-  const [transaction2Effects, transaction2Errors] = await data.create(
+  const [transaction2Effects, transaction2Error] = await data.create(
     'transactions', {
     fields: {
-      actorId: Object.keys(actor1Effects)[0],
+      actorId: actor1Effects.id,
       timestamp: "2019-10-26T15:42:37.667Z",
       action: "buy",
       symbol: "MSFT",
@@ -106,10 +106,10 @@ async function databaseCreationTest() {
       price: 140.73
     }
   })
-  const [transaction3Effects, transaction3Errors] = await data.create(
+  const [transaction3Effects, transaction3Error] = await data.create(
     'transactions', {
     fields: {
-      actorId: Object.keys(actor1Effects)[0],
+      actorId: actor1Effects.id,
       timestamp: "2019-10-27T16:51:15.340Z",
       action: "buy",
       symbol: "TSLA",
@@ -118,43 +118,43 @@ async function databaseCreationTest() {
     }
   })
 
-  if (transaction1Errors.length) {
+  if (transaction1Error) {
     throw new Error(`
       Expected transaction creation to produce no errors.
-      Instead found ${actor1Errors}
+      Instead found ${actor1Error}
     `);
   }
-  if (transaction2Errors.length) {
+  if (transaction2Error) {
     throw new Error(`
       Expected transaction creation to produce no errors.
-      Instead found ${actor2Errors}
+      Instead found ${actor2Error}
     `);
   }
-  if (transaction3Errors.length) {
+  if (transaction3Error) {
     throw new Error(`
       Expected transaction creation to produce no errors.
-      Instead found ${actor3Errors}
+      Instead found ${actor3Error}
     `);
   }
 
   // Populate position
   await data.create('positions', {
     fields: {
-      actorId: Object.keys(actor1Effects)[0],
+      actorId: actor1Effects.id,
       symbol: "MSFT",
       quantity: 7
     }
   })
   await data.create('positions', {
     fields: {
-      actorId: Object.keys(actor1Effects)[0],
+      actorId: actor1Effects.id,
       symbol: "AAPL",
       quantity: 4
     }
   }),
   await data.create('positions', {
     fields: {
-      actorId: Object.keys(actor2Effects)[0],
+      actorId: actor2Effects.id,
       symbol: "TSLA",
       quantity: 2
     }
@@ -162,21 +162,21 @@ async function databaseCreationTest() {
 
   // Update Actor
   await data.alter('actors', {
-    id: Object.keys(actor1Effects)[0],
+    id: actor1Effects.id,
     fields: {
       "cash": 3000,
     }
   })
 
-  if (Object.values(actor1Effects)[0].cash !== 6500.54) {
+  if (actor1Effects.cash !== 6500.54) {
     throw new Error(`
       Expected an actor's cash property to be unchanged at 6500.54 after
       updating without re-reading. Instead found 
-      ${Object.values(actor1Effects)[0].cash}
+      ${actor1Effects.cash}
     `);
   }
 
-  const updatedActor = data.read('actors')[Object.keys(actor1Effects)[0]];
+  const updatedActor = data.read('actors')[actor1Effects.id];
   if (updatedActor.cash !== 3000) {
     throw new Error(`
       Expected an actor's cash property to have changed to 3000 after
@@ -186,7 +186,7 @@ async function databaseCreationTest() {
 
   // Delete Actor
   await data.destroy('actors', {
-    id: Object.keys(actor2Effects)[0],
+    id: actor2Effects.id,
   })
 
   // Expect exactly two actor records to exist after deletion
@@ -200,15 +200,15 @@ async function databaseCreationTest() {
 
   const results = data.find({
     actors: {
-      where: (id, actor) => id == Object.keys(actor1Effects)[0],
+      where: (id, actor) => id == actor1Effects.id,
       limit: 1,
     },
     positions: {
-      where: (id, position) => position.actorId == Object.keys(actor1Effects)[0],
+      where: (id, position) => position.actorId == actor1Effects.id,
       limit: 1,
     },
     transactions: {
-      where: (id, transaction) => transaction.actorId == Object.keys(actor1Effects)[0],
+      where: (id, transaction) => transaction.actorId == actor1Effects.id,
       limit: 1,
     },
   });

@@ -164,54 +164,56 @@ function makeDestroyer(commit) {
   }
 }
 
+
 // Create a function that can use CommitMaterial to persist mutations to file
 function makeCommiter(fm:FileManager, db:ReadOnlyDatabase) {
-  return async function(...cms:CommitMaterial[]): Promise<[Table, Error[]]> {
-    const affectedRecords = {};
-    const errors = [];
+  return async function(cm:CommitMaterial): Promise<[any, Error?]> {
 
     // Don't allow mutations to tables that don't exist
-    cms.forEach(cm => {
-      if (cm.mutation !== 'define' && !db.data[cm.table]) {
-        throw new Error(`The target table "${cm.table}" does not exist`);
-      }
-    })
-
-    for (const cm of cms) {
-      // Apply mutations to memory
-      if (cm.mutation == 'define') {
-        db.data[cm.table] = {};
-        db.meta[cm.table] = {};
-        db.meta[cm.table].referenceField = cm.payload.referenceField;
-      }
-      else if (cm.mutation == 'create') {
-        const { id, fields } = cm.payload;
-        db.data[cm.table][id] = fields;
-        affectedRecords[id] = fields;
-      }
-      else if (cm.mutation == 'alter') {
-        const { id, fields: newFields } = cm.payload;
-        const { ...oldFields } = db.data[cm.table][id];
-        const altered = { ...oldFields, ...newFields };
-        db.data[cm.table][id] = altered;
-        affectedRecords[id] = altered;
-      }
-      else if (cm.mutation == 'destroy') {
-        const record = db.data[cm.table][cm.payload.id];
-        if (record) {
-          delete db.data[cm.table][cm.payload.id]
-          affectedRecords[cm.payload.id] = record;
-        } else {
-          errors.push(new Error(
-            `Could not delete record ${cm.payload.id} from table ${cm.table}, `
-            +  `because it does not exist.`
-          ));
-        }
-      }
-      // Apply mutations to file
-      const write = await fm.commit(cm);
-      if (write instanceof Error) errors.push(write);
+    if (cm.mutation !== 'define' && !db.data[cm.table]) {
+      throw new Error(`The target table "${cm.table}" does not exist`);
     }
-    return [affectedRecords, errors];
+
+    // Apply mutations to file
+    const write = await fm.commit(cm);
+    if (write instanceof Error) {
+      const err = new Error(
+        `A write failure has caused a database desync.`
+        )
+      return [null, err];
+    }
+
+    // Apply mutations to memory
+    if (cm.mutation == 'define') {
+      db.data[cm.table] = {};
+      db.meta[cm.table] = {};
+      db.meta[cm.table].referenceField = cm.payload.referenceField;
+      return [db.data[cm.table], null];
+    }
+    else if (cm.mutation == 'create') {
+      const { id, fields } = cm.payload;
+      db.data[cm.table][id] = fields;
+      return [{id, ...fields }, null];
+    }
+    else if (cm.mutation == 'alter') {
+      const { id, fields: newFields } = cm.payload;
+      const { ...oldFields } = db.data[cm.table][id];
+      const altered = { ...oldFields, ...newFields };
+      db.data[cm.table][id] = altered;
+      return [{ id, ...altered }, null];
+    }
+    else if (cm.mutation == 'destroy') {
+      const record = db.data[cm.table][cm.payload.id];
+      if (record) {
+        delete db.data[cm.table][cm.payload.id]
+        return [{ id: cm.payload.id, ...record }, null];
+      } else {
+        const err = new Error(
+          `Could not delete record ${cm.payload.id} from table ${cm.table}, `
+          +  `because it does not exist.`
+        );
+        return [null, err];
+      }
+    }
   }
 }

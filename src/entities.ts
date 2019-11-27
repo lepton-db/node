@@ -42,6 +42,11 @@ export interface Table {
   [id:string]: Record
 }
 
+export interface UserFacingRecord {
+  id: string
+  [field:string]: number | string | boolean
+}
+
 // This may never be seen by a module user?
 export interface ReadOnlyDatabase {
   data: { [table:string]: Table }
@@ -68,7 +73,7 @@ export interface Database {
   graph?: any // experimental
   find: (FindOptions) => { [table:string]: Table }
   define: (table:string, { referenceField:string }) => Promise<[Table, Error[]]>
-  create: (table:string, { fields:Record }) => Promise<[Table, Error[]]>
-  alter: (table:string, { id:string, fields:Record }) => Promise<[Table, Error[]]>
-  destroy: (table:string, { id:string }) => Promise<[Table, Error[]]>
+  create: (table:string, { fields:Record }) => Promise<[UserFacingRecord, Error[]]>
+  alter: (table:string, { id:string, fields:Record }) => Promise<[UserFacingRecord, Error[]]>
+  destroy: (table:string, { id:string }) => Promise<[UserFacingRecord, Error[]]>
 }
