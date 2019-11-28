@@ -95,7 +95,7 @@ function makeFind(db:ReadOnlyDatabase) {
       results[table] = [];
       for (const [id, record] of Object.entries(targetTable)) {
         if (limit && results[table].length >= limit) break;
-        if (!where || where(id, record)) results[table].push(record);
+        if (!where || where(id, record)) results[table].push({ id, ...record });
       }
     }
     return results;

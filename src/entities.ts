@@ -43,6 +43,8 @@ export interface Table {
   [id:string]: Record
 }
 
+export type UserFacingTable = UserFacingRecord[]
+
 export interface UserFacingRecord {
   id: string
   [field:string]: number | string | boolean
