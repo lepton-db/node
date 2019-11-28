@@ -9,6 +9,7 @@ import {
   AlterationPayload,
   CreationPayload,
   FindOptions,
+  UserFacingRecord,
 } from './entities';
 import { fileManager } from './file-manager';
 import { base36 } from './id';
@@ -32,7 +33,7 @@ export function database(dirpath): Database {
     find: makeFind(db),
     define: makeDefiner(commit),
     create: makeCreator(db, commit),
-    alter: makeAlterer(commit),
+    alter: makeAlterer(db, commit),
     destroy: makeDestroyer(commit),
   }
 }
@@ -137,17 +138,50 @@ function makeCreator(data:ReadOnlyDatabase, commit) {
   }
 }
 
-function makeAlterer(commit) {
+function makeAlterer(data:ReadOnlyDatabase, commit) {
   // Create CommitMaterial that can be used to update existing records
-  return async function alter(table:string, payload:AlterationPayload) {
-    if (!payload.id) throw new Error('payload must have an "id" property');
-    if (!payload.fields) throw new Error('payload must have a "fields" property');
-    const cm: CommitMaterial = {
-      table,
-      mutation: 'alter',
-      payload,
+  return async function alter(
+    table:string,
+    payload:AlterationPayload
+  ): Promise<[UserFacingRecord[], Error[]]> {
+
+    if (!payload.fields) {
+      throw new Error('payload must have a "fields" property');
     }
-    return commit(cm);
+    if (!payload.id && !payload.where) {
+      throw new Error('payload must have "id" or "where" property');
+    }
+
+    const results = [];
+    const errs = [];
+
+    if (payload.id) {
+      const cm: CommitMaterial = {
+        table,
+        mutation: 'alter',
+        payload: { id: payload.id, fields: payload.fields }
+      }
+      const [result, err] = await commit(cm);
+      if (result) results.push(result);
+      if (err) errs.push(err);
+    }
+
+    else if (payload.where) {
+      Object.entries(data[table]).forEach(async ([id, fields]) => {
+        if (payload.where(fields)) {
+          const cm: CommitMaterial = {
+            table,
+            mutation: 'alter',
+            payload: { id, fields: payload.fields }
+          }
+          const [result, err] = await commit(cm);
+          if (result) results.push(result);
+          if (err) errs.push(err);
+        }
+      })
+    }
+
+    return [results, errs]
   }
 }
 

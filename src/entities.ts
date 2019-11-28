@@ -21,7 +21,8 @@ export interface CreationPayload {
 }
 
 export interface AlterationPayload {
-  id: string
+  id?: string
+  where?: (Record) => boolean
   fields: Record
 }
 
@@ -74,6 +75,6 @@ export interface Database {
   find: (FindOptions) => { [table:string]: Table }
   define: (table:string, { referenceField:string }) => Promise<[Table, Error[]]>
   create: (table:string, { fields:Record }) => Promise<[UserFacingRecord, Error[]]>
-  alter: (table:string, { id:string, fields:Record }) => Promise<[UserFacingRecord, Error[]]>
+  alter: (table:string, AlterationPayload) => Promise<[UserFacingRecord[], Error[]]>
   destroy: (table:string, { id:string }) => Promise<[UserFacingRecord, Error[]]>
 }
